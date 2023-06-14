@@ -22,6 +22,11 @@ namespace Tracking
 
         }
 
+        public static ITrackerReadOnly Scope()
+        {
+            return default;
+        }
+
 
     }
 }
