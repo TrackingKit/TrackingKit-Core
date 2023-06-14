@@ -2,6 +2,6 @@
 {
     public interface ITrackableObject
     {
-        ITracker Tracker { get; }
+        ITracker Tracker { get; set; }
     }
 }
