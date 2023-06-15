@@ -2,7 +2,7 @@
   "Title": "Tracking",
   "Type": "library",
   "Org": "sigma",
-  "Ident": "sbox_tracking",
+  "Ident": "tracking",
   "Tags": null,
   "Schema": 1,
   "HasAssets": true,
