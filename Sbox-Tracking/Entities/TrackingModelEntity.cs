@@ -7,7 +7,7 @@ using Sandbox;
 
 namespace Tracking
 {
-    public class TrackerModelEntity : ModelEntity, IManualTrackableObject
+    public class TrackingModelEntity : ModelEntity, IManualTrackableObject
     {
         protected T GetProperty<T>(string propertyName, T propertyValue)
         {
