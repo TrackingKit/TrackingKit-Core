@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Sandbox;
+using Tracking;
 
-namespace Tracking
+namespace Sandbox.Entities
 {
-    public class TrackerModelEntity : ModelEntity
+    public partial class TrackingAnimatedEntity : AnimatedEntity, IManualTrackableObject
     {
         protected T GetProperty<T>(string propertyName, T propertyValue)
         {
@@ -24,7 +24,7 @@ namespace Tracking
 
         protected void SetProperty<T>(string propertyName, T value, Action<T> baseSetter)
         {
-            if(Tracker?.IsScoped ?? false) // if scoped we cant set properties.
+            if (Tracker?.IsScoped ?? false) // if scoped we cant set properties.
             {
                 Log.Error($"Can't set property {propertyName} whilst scoped");
                 return;
@@ -36,9 +36,8 @@ namespace Tracking
 
         public ITracker Tracker { get; set; }
 
-        #region Entity
 
-        // Issue: This should be overridable?
+        // TODO: We really need to find a good "hack" for this.
         public new float Health
         {
             get => GetProperty(nameof(Health), base.Health);
@@ -81,7 +80,6 @@ namespace Tracking
             set => SetProperty(nameof(LocalScale), value, v => base.LocalScale = v);
         }
 
-
         public override Vector3 LocalVelocity
         {
             get => GetProperty(nameof(LocalVelocity), base.LocalVelocity);
@@ -111,7 +109,7 @@ namespace Tracking
             get => GetProperty(nameof(Rotation), base.Rotation);
             set => SetProperty(nameof(Rotation), value, v => base.Rotation = v);
         }
-        #endregion
+
 
     }
 }

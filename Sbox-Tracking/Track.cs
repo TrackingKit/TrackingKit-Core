@@ -22,7 +22,13 @@ namespace Tracking
 
         }
 
-        public static ITrackerReadOnly Scope()
+        [GameEvent.Physics.PreStep]
+        public static void PhysicsPreStep()
+        {
+            // TODO: Basic "parser" for objects subscribed.
+        }
+
+        public static ITracker Get(object obj)
         {
             return default;
         }

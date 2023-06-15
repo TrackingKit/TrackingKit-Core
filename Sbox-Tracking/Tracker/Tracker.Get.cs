@@ -63,12 +63,12 @@ namespace Tracking
         public T GetProperty<T>(string propertyName) => GetProperty<T>(propertyName, Filter.IsSpecificTick ? Filter.MinTick : throw new Exception("Not a specific tick scope") );
 
 
-        public T GetObject<T>(int tick) where T : ITrackableObject
+        public T GetObject<T>(int tick) where T : IManualTrackableObject
         {
             throw new NotImplementedException();
         }
 
-        public T GetObject<T>() where T : ITrackableObject
+        public T GetObject<T>() where T : IManualTrackableObject
         {
             throw new NotImplementedException();
         }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Tracking
 {
-    public class TrackerEntity : Entity, ITrackableObject
+    public class TrackingEntity : Entity, IManualTrackableObject
     {
         protected T GetProperty<T>(string propertyName, T propertyValue)
         {
@@ -36,6 +36,7 @@ namespace Tracking
 
         public ITracker Tracker { get; set; }
 
+        // TODO: We really need to find a good "hack" for this.
         public new float Health
         {
             get => GetProperty(nameof(Health), base.Health);

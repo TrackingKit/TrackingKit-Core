@@ -1,9 +1,13 @@
-﻿using Sandbox;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Sandbox;
 
 namespace Tracking
 {
-    public class TrackingProp : Prop, IManualTrackableObject
+    public class TrackerModelEntity : ModelEntity, IManualTrackableObject
     {
         protected T GetProperty<T>(string propertyName, T propertyValue)
         {
@@ -18,9 +22,11 @@ namespace Tracking
             return propertyValue;
         }
 
+
+
         protected void SetProperty<T>(string propertyName, T value, Action<T> baseSetter)
         {
-            if (Tracker?.IsScoped ?? false) // if scoped we cant set properties.
+            if(Tracker?.IsScoped ?? false) // if scoped we cant set properties.
             {
                 Log.Error($"Can't set property {propertyName} whilst scoped");
                 return;
@@ -31,8 +37,6 @@ namespace Tracking
         }
 
         public ITracker Tracker { get; set; }
-
-
 
         // TODO: Should I be doing it like this.
         public new Model Model

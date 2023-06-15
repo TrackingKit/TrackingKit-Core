@@ -88,7 +88,7 @@ namespace Tracking
         /// <param name="tick"></param>
         /// <returns></returns>
         T GetObject<T>(int tick)
-            where T : ITrackableObject;
+            where T : IManualTrackableObject;
 
         /// <summary>
         /// Gets the value of the property with the specified name at the specified tick.
@@ -116,7 +116,7 @@ namespace Tracking
     public interface ITrackerTickReadOnly : IDisposable
     {
         T GetObject<T>()
-            where T : ITrackableObject;
+            where T : IManualTrackableObject;
 
         /// <summary>
         /// Gets the value of the property with the specified name. (It gets the last version on that tick)
