@@ -44,21 +44,19 @@ namespace Tracking
             set => SetProperty(nameof(Model), value, v => base.Model = v);
         }
 
-       
+
 
         // There isnt a nice way of doing this easily I dont think.
-        internal protected IEnumerable<Transform> internal_Bones
+        protected IEnumerable<Transform> internal_Bones
         {
             get
             {
                 List<Transform> transforms = new List<Transform>();
-
                 var bones = BoneCount;
 
                 for (int i = 0; i < bones; i++)
                 {
                     var tx = GetBoneTransform(i);
-
                     transforms.Add(tx);
                 }
 
@@ -66,12 +64,9 @@ namespace Tracking
             }
             set
             {
-
-                Log.Info("hi");
-
                 var bones = BoneCount;
 
-                if ( value.Count() != bones )
+                if (value.Count() != bones)
                 {
                     Log.Error("Bone count is not correct");
                     return;
@@ -79,18 +74,13 @@ namespace Tracking
 
                 var localPos = Position;
                 var localRot = Rotation.Inverse;
-
-                
+                var valueList = value.ToList();
 
                 for (int i = 0; i < bones; i++)
                 {
-                    var tx = GetBoneTransform(i);
-
-                    tx.Position = (tx.Position - localPos) * localRot * Rotation + Position;
+                    var tx = valueList[i];
+                    tx.Position = (tx.Position - localPos) * localRot + Position;
                     tx.Rotation = Rotation * (localRot * tx.Rotation);
-                    tx.Scale = Scale;
-
-                    // DebugOverlay.Axis( tx.Position, tx.Rotation, 1.0f, 5.0f, false );
 
                     SetBoneTransform(i, tx);
                 }
@@ -112,6 +102,8 @@ namespace Tracking
             set => SetProperty(nameof(Health), value, v => base.Health = v);
         }
 
+
+        // TODO: Maybe we do a smart conversion?
         public override Vector3 Position
         {
             get => GetProperty(nameof(Position), base.Position);
@@ -125,6 +117,7 @@ namespace Tracking
             get => GetProperty(nameof(AngularVelocity), base.AngularVelocity);
             set => SetProperty(nameof(AngularVelocity), value, v => base.AngularVelocity = v);
         }
+
 
         public override Vector3 LocalPosition
         {

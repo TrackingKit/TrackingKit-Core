@@ -21,6 +21,9 @@ namespace DisplacedEntity
 
             Model = Model.Load("models/citizen/citizen.vmdl");
 
+            //Model = Cloud.Model("garry.beachball");
+
+
             SetupPhysicsFromModel(PhysicsMotionType.Dynamic);
 
             base.Spawn();
@@ -28,12 +31,43 @@ namespace DisplacedEntity
 
         TimeSince WaitScuffedTime { get; set; } = 0f;
 
-        [GameEvent.Tick.Server]
-        public void Tick()
+
+
+        [GameEvent.Physics.PostStep]
+        public void PostStep()
         {
             if (WaitScuffedTime < 2f) return;
 
             var aimtick = Time.Tick - Game.TickRate * 1;
+
+            //Log.Info(Position);
+
+
+            if (Tracker == null) return;
+
+
+
+            //DisplacedEntity?.CopyBonesFrom(this, Position, Rotation);
+
+            /*
+            DisplacedEntity?.CopyBonesFrom(this, Position, Rotation);
+
+            if (DisplacedEntity == null)
+            {
+                DisplacedEntity = new TrackingModelEntity
+                {
+                    Model = Model.Load("models/citizen/citizen.vmdl"),
+                    RenderColor = new Color(0, 0, 255, 0.5f),
+                };
+
+                DisplacedEntity.SetupPhysicsFromModel(PhysicsMotionType.Dynamic);
+
+                DisplacedEntity.EnableAllCollisions = false;
+                DisplacedEntity.PhysicsBody.MotionEnabled = false;
+                DisplacedEntity.PhysicsBody.GravityEnabled = false;
+
+            }
+            */
 
             // 1s delay.
             using (var scoped = Tracker.Scope(aimtick) )
@@ -45,38 +79,65 @@ namespace DisplacedEntity
                     DisplacedEntity = new TrackingModelEntity
                     {
                         Model = Model.Load("models/citizen/citizen.vmdl"),
-                        RenderColor = new Color(0, 0, 255, 0.5f)
-
+                        //Model = Cloud.Model("garry.beachball"),
+                        RenderColor = new Color(0, 0, 255, 0.5f),
                     };
 
-                    DisplacedEntity.SetupPhysicsFromModel(PhysicsMotionType.Keyframed );
-
+                    DisplacedEntity.SetupPhysicsFromModel( PhysicsMotionType.Dynamic );
                     DisplacedEntity.EnableAllCollisions = false;
+                   
                 }
 
-                
-                if(Tracker.GetKeyExists(nameof(Position)))
+
+                if (Tracker.GetKeyExists(nameof(Position)))
+                {
+                    Log.Warning("Used value");
                     DisplacedEntity.Position = scoped.GetPropertyOrLast<Vector3>(nameof(Position));
+
+                }
+                else
+                {
+                    Log.Warning("USed something else");
+                    DisplacedEntity.Position = Position;
+
+                }
+
 
                 if (Tracker.GetKeyExists(nameof(Rotation)))
                     DisplacedEntity.Rotation = scoped.GetPropertyOrLast<Rotation>(nameof(Rotation));
-
+                else
+                    DisplacedEntity.Rotation = Rotation;
 
 
                 if (Tracker.GetKeyExists(nameof(Bones)))
                 {
+                    if (Tracker.GetKeyExists(nameof(Rotation)))
+                        DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
+                    else
+                        DisplacedEntity.Rotation = Rotation;
+
+                    //DisplacedEntity.CopyBonesFrom(this);
+
+
+                    //var entityScoped = scoped.GetObject( this );
 
 
 
-                    var displacedEntity = scoped.GetObject( this );
+                    /*
+                    if (Tracker.GetKeyExists(nameof(Rotation)))
+                        DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
+                    else
+                        DisplacedEntity.CopyBonesFrom(this);
+                    */
 
 
-                    
-                    var displacedEntityBones = displacedEntity.Bones;
 
-                    Log.Info(displacedEntityBones != Bones);
+                    //Log.Info(displacedBones == DisplacedEntity.Bones);
 
-                    DisplacedEntity.Bones = displacedEntityBones;
+                    //DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
+
+
+
 
                     //displacedEntity.Position = Vector3.Backward;
 
@@ -108,8 +169,8 @@ namespace DisplacedEntity
                     }
                     */
 
-                   
-                    
+
+
 
                 }
 
