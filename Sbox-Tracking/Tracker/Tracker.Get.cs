@@ -77,11 +77,17 @@ namespace Tracking
             return filteredValues;
         }
 
+        public int SpecificObjectTick { get; set; } = 0;
 
-        public T GetObject<T>(int tick) where T : IManualTrackableObject
+        public object Scoped { get; set; }
+
+        public T GetObject<T>(T obj, int tick) where T : IManualTrackableObject
         {
+            SpecificObjectTick = tick;
 
-            throw new NotImplementedException();
+            Scoped = obj;
+
+            return obj;
         }
 
 
@@ -147,7 +153,7 @@ namespace Tracking
 
         }
 
-        T ITrackerTickReadOnly.GetObject<T>()
+        T ITrackerTickReadOnly.GetObject<T>( T obj )
         {
             if (!IsScoped)
             {
@@ -155,7 +161,12 @@ namespace Tracking
                 return default;
             }
 
-            return default;
+            Scoped = obj;
+
+            // As its specific tick.
+            SpecificObjectTick = OutputFilterSettings.MinTick;
+
+            return obj;
         }
             
 

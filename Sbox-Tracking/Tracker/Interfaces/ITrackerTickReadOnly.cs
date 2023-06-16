@@ -6,7 +6,7 @@ namespace Tracking
     /// <summary> When scoping a single tick. </summary>
     public interface ITrackerTickReadOnly : IDisposable
     {
-        T GetObject<T>()
+        T GetObject<T>( T obj )
             where T : IManualTrackableObject;
 
         /// <summary>

@@ -14,6 +14,8 @@ namespace Tracking
         /// <summary> Are we currently scoped. </summary>
         bool IsScoped { get; }
 
+        int SpecificObjectTick { get; }
+
         InputFilterSettings InputFilterSettings { get; }
 
         /// <summary>

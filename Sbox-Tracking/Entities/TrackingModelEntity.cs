@@ -16,7 +16,7 @@ namespace Tracking
             {
                 if (Tracker.GetKeyExists(propertyName))
                 {
-                    return Tracker.GetPropertyOrLast<T>(propertyName, Time.Tick);
+                    return Tracker.GetPropertyOrLast<T>(propertyName, Tracker.SpecificObjectTick );
                 }
             }
 
@@ -43,6 +43,65 @@ namespace Tracking
             get => GetProperty(nameof(Model), base.Model);
             set => SetProperty(nameof(Model), value, v => base.Model = v);
         }
+
+       
+
+        // There isnt a nice way of doing this easily I dont think.
+        internal protected IEnumerable<Transform> internal_Bones
+        {
+            get
+            {
+                List<Transform> transforms = new List<Transform>();
+
+                var bones = BoneCount;
+
+                for (int i = 0; i < bones; i++)
+                {
+                    var tx = GetBoneTransform(i);
+
+                    transforms.Add(tx);
+                }
+
+                return transforms.AsEnumerable();
+            }
+            set
+            {
+
+                Log.Info("hi");
+
+                var bones = BoneCount;
+
+                if ( value.Count() != bones )
+                {
+                    Log.Error("Bone count is not correct");
+                    return;
+                }
+
+                var localPos = Position;
+                var localRot = Rotation.Inverse;
+
+                
+
+                for (int i = 0; i < bones; i++)
+                {
+                    var tx = GetBoneTransform(i);
+
+                    tx.Position = (tx.Position - localPos) * localRot * Rotation + Position;
+                    tx.Rotation = Rotation * (localRot * tx.Rotation);
+                    tx.Scale = Scale;
+
+                    // DebugOverlay.Axis( tx.Position, tx.Rotation, 1.0f, 5.0f, false );
+
+                    SetBoneTransform(i, tx);
+                }
+            }
+        }
+
+        public IEnumerable<Transform> Bones
+        {
+            get => GetProperty(nameof(Bones), internal_Bones );
+            set => SetProperty(nameof(Bones), value, v => internal_Bones = v);
+        } 
 
         #region Entity
 
@@ -124,6 +183,8 @@ namespace Tracking
         #endregion
 
 
+
+
         private int PreviousTickHash { get; set; } = 0;
 
         // This is a way of recording properties at the end of each tick from the internal physics inside the engine we dont access with normal
@@ -133,7 +194,7 @@ namespace Tracking
         [GameEvent.Tick.Server]
         private void RecordProperties()
         {
-            if (PhysicsBody.BodyType != PhysicsBodyType.Dynamic) return;
+            if ( PhysicsBody == null ) return;
 
             var builtHash1 = HashCode.Combine(Model, Health, Position, Rotation, LocalRotation, LocalPosition, Scale, LocalScale );
 
@@ -160,7 +221,7 @@ namespace Tracking
                 Tracker?.Set(nameof(Parent), Parent);
                 Tracker?.Set(nameof(Owner), Owner);
 
-
+                Tracker?.Set(nameof(Bones), Bones);
 
                 /*
                 Model = Model;

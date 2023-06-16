@@ -15,7 +15,7 @@ namespace Tracking
         /// <typeparam name="T"></typeparam>
         /// <param name="tick"></param>
         /// <returns></returns>
-        T GetObject<T>(int tick)
+        T GetObject<T>( T obj, int tick)
             where T : IManualTrackableObject;
 
         /// <summary>

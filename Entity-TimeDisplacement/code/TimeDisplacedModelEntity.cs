@@ -11,7 +11,7 @@ namespace DisplacedEntity
     [Library("Displaced Entity")]
     public partial class TimeDisplacedModelEntity : TrackingModelEntity
     {
-        private ModelEntity DisplacedEntity { get; set; } 
+        private TrackingModelEntity DisplacedEntity { get; set; } 
 
         public override void Spawn()
         {
@@ -38,36 +38,88 @@ namespace DisplacedEntity
             // 1s delay.
             using (var scoped = Tracker.Scope(aimtick) )
             {
-                if (Tracker.GetKeyExists(nameof(Position)))
-                {
-                    if (DisplacedEntity == null)
-                    {
-                        DisplacedEntity = new ModelEntity();
-                        DisplacedEntity.Model = Model.Load("models/citizen/citizen.vmdl");
-                        DisplacedEntity.RenderColor = new Color(0,0,255, 0.5f);
-                        
-                    }
+                
 
-                    DisplacedEntity.Position = scoped.GetPropertyOrLast<Vector3>(nameof(Position));
+                if(DisplacedEntity == null)
+                {
+                    DisplacedEntity = new TrackingModelEntity
+                    {
+                        Model = Model.Load("models/citizen/citizen.vmdl"),
+                        RenderColor = new Color(0, 0, 255, 0.5f)
+
+                    };
+
+                    DisplacedEntity.SetupPhysicsFromModel(PhysicsMotionType.Keyframed );
+
+                    DisplacedEntity.EnableAllCollisions = false;
                 }
 
+                
+                if(Tracker.GetKeyExists(nameof(Position)))
+                    DisplacedEntity.Position = scoped.GetPropertyOrLast<Vector3>(nameof(Position));
+
                 if (Tracker.GetKeyExists(nameof(Rotation)))
+                    DisplacedEntity.Rotation = scoped.GetPropertyOrLast<Rotation>(nameof(Rotation));
+
+
+
+                if (Tracker.GetKeyExists(nameof(Bones)))
                 {
-                    if (DisplacedEntity == null)
+
+
+
+                    var displacedEntity = scoped.GetObject( this );
+
+
+                    
+                    var displacedEntityBones = displacedEntity.Bones;
+
+                    Log.Info(displacedEntityBones != Bones);
+
+                    DisplacedEntity.Bones = displacedEntityBones;
+
+                    //displacedEntity.Position = Vector3.Backward;
+
+
+                    /*
+                    if( displacedEntityBones != Bones )
                     {
-                        DisplacedEntity = new ModelEntity();
-                        DisplacedEntity.Model = Model.Load("models/citizen/citizen.vmdl");
-                        DisplacedEntity.RenderColor = new Color(0, 0, 255, 0.5f);
+                        var localPos = displacedEntity.LocalPosition;
+                        var localRot = displacedEntity.LocalRotation;
+
+                        var rot = displacedEntity.Rotation;
+                        var pos = displacedEntity.Position;
+                        var scale = displacedEntity.Scale;
+
+                        for (int i = 0; i < Bones.Count(); i++)
+                        {
+                            var tx = displacedEntityBones.ElementAt(i);
+
+
+
+
+                            tx.Position = (tx.Position - localPos) * localRot * rot + pos;
+                            tx.Rotation = rot * (localRot * tx.Rotation);
+                            tx.Scale = scale;
+
+                            DisplacedEntity.SetBoneTransform(i, tx);
+                        }
 
                     }
+                    */
 
-                    DisplacedEntity.Rotation = scoped.GetPropertyOrLast<Rotation>(nameof(Rotation));
+                   
+                    
+
                 }
 
 
 
                 //DisplacedEntity.Rotation = scoped.GetPropertyOrLast<Rotation>(nameof(Rotation));
             }
+
+
+
         }
 
     }
