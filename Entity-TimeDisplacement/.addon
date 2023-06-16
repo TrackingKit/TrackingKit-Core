@@ -1,0 +1,29 @@
+{
+  "Title": "Time Displaced Entity",
+  "Type": "addon",
+  "Org": "sigma",
+  "Ident": "time_displaced_entity",
+  "Tags": "runtime",
+  "Schema": 1,
+  "HasAssets": true,
+  "AssetsPath": "",
+  "Resources": null,
+  "MenuResources": null,
+  "HasCode": true,
+  "CodePath": "/code/",
+  "PackageReferences": [
+    "sigma.tracking"
+  ],
+  "EditorReferences": null,
+  "Metadata": {
+    "CsProjName": "",
+    "PrimaryAsset": "DisplacedEntity.TimeDisplacedModelEntity",
+    "PhysicsMins": "-1,-1,-1",
+    "PhysicsMaxs": "1,1,1",
+    "RenderMins": "-1,-1,-1",
+    "RenderMaxs": "-1,-1,-1",
+    "Summary": "",
+    "Description": "",
+    "Public": true
+  }
+}

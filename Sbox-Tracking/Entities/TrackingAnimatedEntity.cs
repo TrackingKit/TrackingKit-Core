@@ -13,9 +13,10 @@ namespace Sandbox.Entities
         {
             if (Tracker?.IsScoped ?? false)
             {
-                if (Tracker.KeyExistsInTracker(propertyName))
+                if (Tracker.GetKeyExists(propertyName))
                 {
-                    return Tracker.GetPropertyOrLast<T>(propertyName);
+
+                    return Tracker.GetPropertyOrLast<T>(propertyName, Time.Tick);
                 }
             }
 

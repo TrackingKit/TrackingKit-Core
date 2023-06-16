@@ -9,8 +9,14 @@ namespace Tracking
 {
     public partial class Tracker : ITracker
     {
-        // Linked list 
+        // TODO: Linked list, sort out a way of data.
         private readonly Dictionary<TrackerKey, object> Values = new Dictionary<TrackerKey, object>();
+
+        /// <summary> Our filter of allowing entries. </summary>
+        public InputFilterSettings InputFilterSettings { get; set; } = new InputFilterSettings();
+
+
+        // Building
 
         public HashSet<string> CurrentBuildTags { get; set; } = new HashSet<string>();
 
@@ -18,12 +24,15 @@ namespace Tracking
 
         public void StartGroup(params string[] idents) => idents?.ToList().ForEach(ident => CurrentBuildTags.Add(ident));
 
-        public bool KeyExistsInTracker(string propertyName) => Values.Keys.Where(x => x.PropertyName == propertyName).Count() != 0;
+
+
+
+
 
         protected (int min, int max) RecordedRange => (Values.Min(x => x.Key.Tick), Values.Max(x => x.Key.Tick));
 
-        public bool IsScoped => Filter?.IsScoped ?? false;
-
+        // TODO: maybe allow people to set back in time but I aint sure on that at all.
+        // It might feel a bit flawed.
         public void Set(string propertyName, object value, params string[] idents)
         {
 
@@ -37,11 +46,32 @@ namespace Tracking
             {
                 PropertyName = propertyName,
                 Version = latestRecordedVersion + 1,
-                Tags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray()
+                Tags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray(),
+                Tick = Time.Tick,
             };
+
+
+            if (!CanSet(propertyName, value)) return;
 
             Values.Add(key, value);
         }
+
+        protected bool CanSet(string propertyName, object value)
+        {
+            if (!InputFilterSettings.IsPropertyWhitelisted(propertyName))
+                return false;
+
+
+            // TODO: Deal withg
+            /*
+            if (!InputFilterSettings.AllowConsecutiveDuplicateValues && GetKeyExists(propertyName) && GetPropertyOrLast<object>(propertyName, Time.Tick) == value)
+                return false;
+            */
+
+            return true;
+        }
+
+        public bool GetKeyExists(string propertyName) => Values.Keys.Where(x => x.PropertyName == propertyName).Any();
 
 
     }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using Sandbox;
@@ -13,16 +14,14 @@ namespace Tracking
         {
             if (Tracker?.IsScoped ?? false)
             {
-                if (Tracker.KeyExistsInTracker(propertyName))
+                if (Tracker.GetKeyExists(propertyName))
                 {
-                    return Tracker.GetPropertyOrLast<T>(propertyName);
+                    return Tracker.GetPropertyOrLast<T>(propertyName, Time.Tick);
                 }
             }
 
             return propertyValue;
         }
-
-
 
         protected void SetProperty<T>(string propertyName, T value, Action<T> baseSetter)
         {
@@ -59,6 +58,8 @@ namespace Tracking
             get => GetProperty(nameof(Position), base.Position);
             set => SetProperty(nameof(Position), value, v => base.Position = v);
         }
+
+        
 
         public override Angles AngularVelocity
         {
@@ -121,6 +122,66 @@ namespace Tracking
             set => SetProperty(nameof(Rotation), value, v => base.Rotation = v);
         }
         #endregion
+
+
+        private int PreviousTickHash { get; set; } = 0;
+
+        // This is a way of recording properties at the end of each tick from the internal physics inside the engine we dont access with normal
+        // commands.
+        //[GameEvent.Physics.PostStep]
+
+        [GameEvent.Tick.Server]
+        private void RecordProperties()
+        {
+            if (PhysicsBody.BodyType != PhysicsBodyType.Dynamic) return;
+
+            var builtHash1 = HashCode.Combine(Model, Health, Position, Rotation, LocalRotation, LocalPosition, Scale, LocalScale );
+
+            var builtHash2 = HashCode.Combine(LocalVelocity, Velocity, Parent, Owner);
+
+            var builtHash = HashCode.Combine(builtHash1, builtHash2);
+
+            if(builtHash != PreviousTickHash)
+            {
+                PreviousTickHash = builtHash;
+
+                // TODO: Add Tag Engine/internal? As if these are different to last tick we aint got a clue at this point how this happened here except from Engine probably.
+
+                Tracker?.Set(nameof(Model), Model);
+                Tracker?.Set(nameof(Health), Health);
+                Tracker?.Set(nameof(Position), Position);
+                Tracker?.Set(nameof(Rotation), Rotation);
+                Tracker?.Set(nameof(LocalPosition), LocalPosition);
+                Tracker?.Set(nameof(Scale), Scale);
+                Tracker?.Set(nameof(LocalScale), LocalScale);
+
+                Tracker?.Set(nameof(LocalVelocity), LocalVelocity);
+                Tracker?.Set(nameof(Velocity), Velocity);
+                Tracker?.Set(nameof(Parent), Parent);
+                Tracker?.Set(nameof(Owner), Owner);
+
+
+
+                /*
+                Model = Model;
+                Health = Health;
+                Position = Position;
+                Rotation = Rotation;
+                LocalRotation = LocalRotation;
+                LocalPosition = LocalPosition;
+                Scale = Scale;
+                LocalScale = LocalScale;
+                Scale = Scale;
+                LocalScale = LocalScale;
+
+                LocalVelocity = LocalVelocity;
+                Velocity = Velocity;
+                Parent = Parent;
+                Owner = Owner;
+                */
+
+            }
+        }
 
     }
 }

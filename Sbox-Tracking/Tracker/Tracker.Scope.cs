@@ -7,108 +7,112 @@ using System.Threading.Tasks;
 
 namespace Tracking
 {
-    public class TrackerFilter
+    public class OutputFilterSettings
     {
-        public int MinTick { get; set; }
+        public int MinTick { get; init; }
 
-        public int MaxTick { get; set; }
-
-
-        //public int SpecificTick => MinTick;
-
-        public bool IsScoped { get; set; }
-
-        public string[] Tags { get; set; }
+        public int MaxTick { get; init; }
 
         public bool IsSpecificTick => MinTick == MaxTick;
 
-
-        public bool InRange(int tick) => (tick >= MinTick) || (tick <= MaxTick);
-
-        public bool InRange(int[] ticks) => ticks.All( x => InRange(x) ) ;
+        /// <summary> Any tags we should filter out. </summary>
+        public string[] Tags { get; init; }
 
     }
 
     public partial class Tracker
     {
-        public TrackerFilter Filter { get; set; } = new TrackerFilter();
+        public bool IsScoped => OutputFilterSettings != null;
+
+        protected OutputFilterSettings OutputFilterSettings { get; set; }
 
 
         // We reset Filter once done with scope.
-        public void Dispose() => Filter = new TrackerFilter();
+        public void Dispose()
+        {
+            OutputFilterSettings = null;
+        }
+
+        protected bool CanScope(int minTick, int maxTick, bool supressMessages = true, params string[] idents)
+        {
+            if (IsScoped)
+            {
+                if(!supressMessages) Log.Error("Already scoped, please close current scope");
+
+                return false;
+            }
+
+            if(minTick > maxTick)
+            {
+                if (!supressMessages) Log.Warning("MinTick greater than MaxTick");
+            }
+
+
+
+
+            return true;
+        }
 
 
         // TODO: Sort this all out.
 
         public ITrackerTickReadOnly Scope(int specificTick, params string[] idents)
         {
-            if (Filter.IsScoped)
+            if (!CanScope(specificTick, specificTick, false, idents)) return null;
+
+
+            OutputFilterSettings = new OutputFilterSettings()
             {
-                Log.Error($"Already scoped, filter: {Filter}");
-                return default;
-            }
-
-
-            if( RecordedRange.min >= specificTick || specificTick >= RecordedRange.max)
-            {
-                Log.Error("This tick wasn't recorded during this interval");
-                return default;
-            }
-
-            Filter.MaxTick = specificTick;
-            Filter.MinTick = specificTick;
+                MinTick = specificTick,
+                MaxTick = specificTick,
+                Tags = idents
+            };
 
             return this;
         }
 
+
+        // Scope exists so we ensure the user knows if they're going out of bounds.
         public ITrackerReadOnly Scope(int minTick, int maxTick, params string[] idents)
         {
-            if (Filter.IsScoped)
+            if (!CanScope(minTick, maxTick, false, idents)) return null;
+
+
+            OutputFilterSettings = new OutputFilterSettings()
             {
-                Log.Error($"Already scoped, filter: {Filter}");
-                return default;
-            }
-
-
-            if (RecordedRange.min <= minTick || maxTick >= RecordedRange.max)
-            {
-                Log.Error("This tick wasn't recorded during this interval");
-                return default;
-            }
-
-            Filter.MaxTick = minTick;
-            Filter.MaxTick = maxTick;
-            Filter.Tags = idents;
-
-
+                MinTick = minTick,
+                MaxTick = maxTick,
+                Tags = idents
+            };
 
             return this;
         }
 
         public ITrackerReadOnly Scope(params string[] idents)
         {
-            if (Filter.IsScoped)
+            if (!CanScope(int.MinValue, int.MaxValue, false, idents)) return null;
+
+
+            OutputFilterSettings = new OutputFilterSettings()
             {
-                Log.Error($"Already scoped, filter: {Filter}");
-                return default;
-            }
+                MinTick = int.MinValue,
+                MaxTick = int.MaxValue,
+                Tags = idents
+            };
 
-
-            Filter.Tags = idents;
-
-            return Scope();
+            return this;
         }
 
         public ITrackerReadOnly Scope()
         {
-            if (Filter.IsScoped)
-            {
-                Log.Error($"Already scoped, filter: {Filter}");
-                return default;
-            }
+            if (!CanScope(int.MinValue, int.MaxValue, false)) return null;
 
-            Filter.MaxTick = int.MaxValue;
-            Filter.MaxTick = int.MinValue;
+
+            OutputFilterSettings = new OutputFilterSettings()
+            {
+                MinTick = int.MinValue,
+                MaxTick = int.MaxValue,
+            };
 
             return this;
         }

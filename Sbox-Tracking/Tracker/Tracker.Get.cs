@@ -7,34 +7,62 @@ using System.Threading.Tasks;
 
 namespace Tracking
 {
-    public partial class Tracker
+    // TODO: Should we just let 
+
+    public partial class Tracker : ITrackerReadOnly
     {
+        protected bool CanGet( int tick )
+        {
+            // If we're scoped check conditions.
+            if ( IsScoped )
+            {
+                // Is the tick in the range.
+                if ( (tick <= OutputFilterSettings.MinTick) || (tick >= OutputFilterSettings.MaxTick) )
+                {
+                    Log.Error("Tick is not in range of scope");
+                    return false;
+                }
+            }
+
+
+            return true;
+        }
+
+        protected bool CanGet( int tick, string propertyName )
+        {
+            // TODO: property specific ?
+
+            return CanGet(tick);
+        }
+
+        protected IEnumerable<TrackerKey> GetKeysByPropertyName(string propertyName)
+        {
+            var filteredPropertyKeys = Values.Keys
+               .Where(x => x.PropertyName == propertyName);
+
+            if (filteredPropertyKeys.Count() == 0)
+            {
+                Log.Error($"Key doesn't exist {propertyName}");
+                return null;
+            }
+
+            return filteredPropertyKeys;
+        }
+
         public T GetProperty<T>(string propertyName, int tick) => GetPropertyDetailed<T>(propertyName, tick).Last(); // TODO: Probably unoptimised.
 
         public IEnumerable<T> GetPropertyDetailed<T>(string propertyName, int tick)
         {
-            if(Filter != null)
-            {
-                if (!Filter.InRange(tick))
-                {
-                    Log.Error("Tick provided not in range");
-                    return default;
-                }
-            }
+            if (!CanGet(tick)) return default;
 
-            var filteredPropertyKeys = Values.Keys
-               .Where( x => x.PropertyName == propertyName );
+            var filteredPropertyKeys = GetKeysByPropertyName(propertyName);
+            if (filteredPropertyKeys == null) return default;
 
-            if (filteredPropertyKeys.Count() == 0)
-            {
-                Log.Error($"Key doesnt exist {propertyName}");
-                return default;
-            }
 
             var filteredKeys = filteredPropertyKeys
                .Where(x => x.Tick == tick);
 
-            if(filteredKeys.Count() == 0)
+            if(!filteredKeys.Any())
             {
                 Log.Error($"Keys exist but, no key's found at tick: {tick} for propertyName: {propertyName} ");
             }
@@ -49,38 +77,120 @@ namespace Tracking
             return filteredValues;
         }
 
-        public IEnumerable<T> GetPropertyDetailed<T>(string propertyName)
-        {
-            if (Filter == null)
-                throw new Exception("Requires a Filter");
-
-            if (!Filter.IsSpecificTick)
-                throw new Exception("Requires a specific tick filter");
-
-            return GetPropertyDetailed<T>(propertyName, Filter.MinTick);
-        }
-
-        public T GetProperty<T>(string propertyName) => GetProperty<T>(propertyName, Filter.IsSpecificTick ? Filter.MinTick : throw new Exception("Not a specific tick scope") );
-
 
         public T GetObject<T>(int tick) where T : IManualTrackableObject
         {
+
             throw new NotImplementedException();
         }
 
-        public T GetObject<T>() where T : IManualTrackableObject
+
+        public T GetPropertyOrLast<T>(string propertyName, int tick) => GetPropertyDetailedOrLast<T>(propertyName, tick).Last();
+
+        public IEnumerable<T> GetPropertyDetailedOrLast<T>(string propertyName, int tick)
         {
-            throw new NotImplementedException();
+            // Get keys for the specific propertyName
+            var filteredPropertyKeys = GetKeysByPropertyName(propertyName);
+            if (filteredPropertyKeys == null) return default;
+
+            // Get keys for the specific tick
+            var specificTickKeys = filteredPropertyKeys
+               .Where(x => x.Tick == tick);
+
+            IEnumerable<T> result;
+
+            if (specificTickKeys.Count() > 0)
+            {
+                // If keys for specific tick are found, get the associated values
+                result = specificTickKeys.Select(x => Values[x]).OfType<T>();
+            }
+            else
+            {
+                // If no keys are found for the specific tick, get the last recorded property values
+                result = filteredPropertyKeys
+                    .OrderByDescending(x => x.Tick)  // Order by tick in descending order to get the latest ones first
+                    .Select(x => Values[x]).OfType<T>();
+            }
+
+            return result;
         }
 
-        public T GetPropertyOrLast<T>(string propertyName, int tick)
+
+    }
+
+    // Design note: This is interface only as it requires a filter, so I recommend you use Scope(tick). Potentially changed.
+    public partial class Tracker : ITrackerTickReadOnly
+    {
+
+        IEnumerable<T> ITrackerTickReadOnly.GetPropertyDetailed<T>(string propertyName)
         {
-            throw new NotImplementedException();
+            if (!IsScoped)
+            {
+                Log.Error("Not scoped");
+                return default;
+            }
+
+            
+
+            return default;
         }
 
-        public T GetPropertyOrLast<T>(string propertyName)
+        T ITrackerTickReadOnly.GetProperty<T>(string propertyName)
         {
-            throw new NotImplementedException();
+            if (!IsScoped)
+            {
+                Log.Error("Not scoped");
+                return default;
+            }
+
+            return default;
+
+        }
+
+        T ITrackerTickReadOnly.GetObject<T>()
+        {
+            if (!IsScoped)
+            {
+                Log.Error("Not scoped");
+                return default;
+            }
+
+            return default;
+        }
+            
+
+        T ITrackerTickReadOnly.GetPropertyOrLast<T>(string propertyName)
+        {
+            if (!IsScoped)
+            {
+                Log.Error("Not scoped");
+                return default;
+            }
+
+            if (!OutputFilterSettings.IsSpecificTick)
+            {
+                Log.Error("not specific tick");
+                return default;
+            }
+
+
+
+            return GetPropertyOrLast<T>(propertyName, OutputFilterSettings.MinTick);
+
+        }
+
+        IEnumerable<T> ITrackerTickReadOnly.GetPropertyDetailedOrLast<T>(string propertyName)
+        {
+            if (!IsScoped)
+            {
+                Log.Error("Not scoped");
+                return default;
+            }
+
+            return default;
+
         }
     }
+
+    
 }

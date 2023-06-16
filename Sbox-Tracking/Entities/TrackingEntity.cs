@@ -13,9 +13,10 @@ namespace Tracking
         {
             if (Tracker?.IsScoped ?? false)
             {
-                if (Tracker.KeyExistsInTracker(propertyName))
+                if (Tracker.GetKeyExists(propertyName))
                 {
-                    return Tracker.GetPropertyOrLast<T>(propertyName);
+                    // If key exists then there must be a last one somewhere.
+                    return Tracker.GetPropertyOrLast<T>(propertyName, Time.Tick);
                 }
             }
 

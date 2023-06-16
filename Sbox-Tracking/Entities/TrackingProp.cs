@@ -3,15 +3,19 @@ using System;
 
 namespace Tracking
 {
+    /// <summary>
+    /// <strong>Warning: You need to add base.sandbox to use this in any libaries
+    /// due to some issue with it. </strong>
+    /// </summary>
     public class TrackingProp : Prop, IManualTrackableObject
     {
         protected T GetProperty<T>(string propertyName, T propertyValue)
         {
             if (Tracker?.IsScoped ?? false)
             {
-                if (Tracker.KeyExistsInTracker(propertyName))
+                if (Tracker.GetKeyExists(propertyName))
                 {
-                    return Tracker.GetPropertyOrLast<T>(propertyName);
+                    return Tracker.GetPropertyOrLast<T>(propertyName, Time.Tick);
                 }
             }
 
