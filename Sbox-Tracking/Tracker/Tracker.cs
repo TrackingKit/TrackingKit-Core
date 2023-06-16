@@ -10,7 +10,7 @@ namespace Tracking
     public partial class Tracker : ITracker
     {
         // TODO: Linked list, sort out a way of data.
-        private readonly Dictionary<TrackerKey, object> Values = new Dictionary<TrackerKey, object>();
+        private readonly SortedDictionary<TrackerKey, object> Values = new SortedDictionary<TrackerKey, object>();
 
         /// <summary> Our filter of allowing entries. </summary>
         public InputFilterSettings InputFilterSettings { get; set; } = new InputFilterSettings();
@@ -25,9 +25,24 @@ namespace Tracking
         public void StartGroup(params string[] idents) => idents?.ToList().ForEach(ident => CurrentBuildTags.Add(ident));
 
 
+        public Tracker() => Event.Register(this);
 
 
+        [GameEvent.Tick.Server]
+        protected void Tick()
+        {
+            // Set the threshold for old ticks
+            int oldTickThreshold = Time.Tick - 60;
 
+            // Find keys which are older than the threshold
+            var keysToRemove = Values.Keys.Where(key => key.Tick < oldTickThreshold).ToList();
+
+            // Remove the old entries
+            foreach (var key in keysToRemove)
+            {
+                Values.Remove(key);
+            }
+        }
 
         protected (int min, int max) RecordedRange => (Values.Min(x => x.Key.Tick), Values.Max(x => x.Key.Tick));
 
