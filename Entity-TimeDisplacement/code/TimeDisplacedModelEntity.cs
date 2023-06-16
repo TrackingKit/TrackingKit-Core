@@ -33,18 +33,19 @@ namespace DisplacedEntity
 
 
 
+
         [GameEvent.Physics.PostStep]
         public void PostStep()
         {
+
             if (WaitScuffedTime < 2f) return;
 
-            var aimtick = Time.Tick - Game.TickRate * 1;
+
+            var aimtick = Time.Tick - Game.TickRate * 2;
+
+
 
             //Log.Info(Position);
-
-
-            if (Tracker == null) return;
-
 
 
             //DisplacedEntity?.CopyBonesFrom(this, Position, Rotation);
@@ -73,6 +74,7 @@ namespace DisplacedEntity
             using (var scoped = Tracker.Scope(aimtick) )
             {
                 
+                
 
                 if(DisplacedEntity == null)
                 {
@@ -87,6 +89,7 @@ namespace DisplacedEntity
                     DisplacedEntity.EnableAllCollisions = false;
                    
                 }
+
 
 
                 if (Tracker.GetKeyExists(nameof(Position)))
@@ -110,67 +113,10 @@ namespace DisplacedEntity
 
 
                 if (Tracker.GetKeyExists(nameof(Bones)))
+                    DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
+                else
                 {
-                    if (Tracker.GetKeyExists(nameof(Rotation)))
-                        DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
-                    else
-                        DisplacedEntity.Rotation = Rotation;
-
-                    //DisplacedEntity.CopyBonesFrom(this);
-
-
-                    //var entityScoped = scoped.GetObject( this );
-
-
-
-                    /*
-                    if (Tracker.GetKeyExists(nameof(Rotation)))
-                        DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
-                    else
-                        DisplacedEntity.CopyBonesFrom(this);
-                    */
-
-
-
-                    //Log.Info(displacedBones == DisplacedEntity.Bones);
-
-                    //DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
-
-
-
-
-                    //displacedEntity.Position = Vector3.Backward;
-
-
-                    /*
-                    if( displacedEntityBones != Bones )
-                    {
-                        var localPos = displacedEntity.LocalPosition;
-                        var localRot = displacedEntity.LocalRotation;
-
-                        var rot = displacedEntity.Rotation;
-                        var pos = displacedEntity.Position;
-                        var scale = displacedEntity.Scale;
-
-                        for (int i = 0; i < Bones.Count(); i++)
-                        {
-                            var tx = displacedEntityBones.ElementAt(i);
-
-
-
-
-                            tx.Position = (tx.Position - localPos) * localRot * rot + pos;
-                            tx.Rotation = rot * (localRot * tx.Rotation);
-                            tx.Scale = scale;
-
-                            DisplacedEntity.SetBoneTransform(i, tx);
-                        }
-
-                    }
-                    */
-
-
-
+                    DisplacedEntity.Bones = Bones;
 
                 }
 
