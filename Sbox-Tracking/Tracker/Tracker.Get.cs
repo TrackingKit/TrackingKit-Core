@@ -28,13 +28,6 @@ namespace Tracking
             return true;
         }
 
-        protected bool CanGet( int tick, string propertyName )
-        {
-            // TODO: property specific ?
-
-            return CanGet(tick);
-        }
-
         protected IEnumerable<TrackerKey> GetKeysByPropertyName(string propertyName)
         {
             var filteredPropertyKeys = Values.Keys
