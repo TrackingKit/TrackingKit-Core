@@ -77,7 +77,7 @@ namespace Tracking
                 return false;
 
 
-            // TODO: Deal withg
+            // TODO: Fix this.
             /*
             if (!InputFilterSettings.AllowConsecutiveDuplicateValues && GetKeyExists(propertyName) && GetPropertyOrLast<object>(propertyName, Time.Tick) == value)
                 return false;
@@ -86,7 +86,7 @@ namespace Tracking
             return true;
         }
 
-        public bool GetKeyExists(string propertyName) => Values.Keys.Where(x => x.PropertyName == propertyName).Any();
+        public bool GetKeyExists(string propertyName) => Values.Keys.Where(x => x.PropertyName == propertyName ).Any();
 
 
     }

@@ -12,19 +12,26 @@ namespace Tracking
     {
         protected T GetProperty<T>(string propertyName, T propertyValue)
         {
-            if (Tracker?.IsScoped ?? false)
+            // Disabled for now as its bad for: GetObject how I set it up.
+
+            /*
+            if (Tracker?.IsScoped ?? false && Tracker.SpecificObjectTick  && Tracker.GetKeyExists(propertyName))
             {
-                if (Tracker.GetKeyExists(propertyName))
-                {
-                    return Tracker.GetPropertyOrLast<T>(propertyName, Tracker.SpecificObjectTick );
-                }
+                if (propertyName == nameof(LocalBodyParts))
+                    Log.Info("hi");
+
+                return Tracker.GetPropertyOrLast<T>(propertyName, Tracker.SpecificObjectTick);
+
             }
+            */
+            
 
             return propertyValue;
         }
 
         protected void SetProperty<T>(string propertyName, T value, Action<T> baseSetter)
         {
+            
             if(Tracker?.IsScoped ?? false) // if scoped we cant set properties.
             {
                 Log.Error($"Can't set property {propertyName} whilst scoped");
@@ -45,9 +52,65 @@ namespace Tracking
         }
 
 
+        //public 
 
-        // There isnt a nice way of doing this easily I dont think.
-        protected IEnumerable<Transform> internal_Bones
+
+        private IEnumerable<Transform> internal_bodyparts
+        {
+            get
+            {
+                List<Transform> transforms = new List<Transform>();
+
+                
+                var bodyCount = PhysicsGroup.BodyCount;
+                
+
+                for (int i = 0; i < bodyCount; i++)
+                {
+
+                    // we make it local as we can use parent and this to calculate normal BodyParts.
+                    var tx = PhysicsGroup.GetBody( i ).Transform;
+
+                    
+
+                    transforms.Add( tx );
+                }
+
+                return transforms;
+            }
+
+            set
+            {
+
+                var bodyCount = PhysicsGroup.BodyCount;
+
+                if (value.Count() != bodyCount)
+                {
+                    Log.Error("Bone count is not correct");
+                    return;
+                }
+
+                var valueList = value.ToList();
+
+
+                for (int i = 0; i < bodyCount; i++)
+                {
+                    var tx = valueList[i];
+
+
+                    PhysicsGroup.GetBody(i).Transform.ToLocal(tx);
+                }
+            }
+        }
+
+        public IEnumerable<Transform> BodyParts
+        {
+            get => GetProperty(nameof(BodyParts), internal_bodyparts);
+            set => SetProperty(nameof(BodyParts), value, v => internal_bodyparts = v);
+        }
+
+
+        private IEnumerable<Transform> internal_Bones
         {
             get
             {
@@ -72,21 +135,78 @@ namespace Tracking
                     return;
                 }
 
-                var localPos = Position;
-                var localRot = Rotation.Inverse;
+                // TODO: I commented out but doesnt make sense when we go from world in set,
+                // dont wnna translate.
+
+                //var localPos = Position;
+                //var localRot = Rotation.Inverse;
+
                 var valueList = value.ToList();
 
                 for (int i = 0; i < bones; i++)
                 {
+                    // XXXXX Translate from Local to Actual.
                     var tx = valueList[i];
-                    tx.Position = (tx.Position - localPos) * localRot + Position;
-                    tx.Rotation = Rotation * (localRot * tx.Rotation);
+                    //tx.Position = (tx.Position - localPos) * localRot + Position;
+                    //tx.Rotation = Rotation * (localRot * tx.Rotation);
+                    //tx.Scale = Scale;
 
                     SetBoneTransform(i, tx);
                 }
             }
         }
 
+        
+
+
+        private IEnumerable<Transform> internal_localbones
+        {
+            get
+            {
+                List<Transform> transforms = new List<Transform>();
+                var bones = BoneCount;
+
+                for (int i = 0; i < bones; i++)
+                {
+                    // We want it related to entity (local)
+                    var tx = GetBoneTransform(i, false);
+                    transforms.Add(tx);
+                }
+
+                return transforms.AsEnumerable();
+            }
+            set
+            {
+                var bones = BoneCount;
+
+                if (value.Count() != bones)
+                {
+                    Log.Error("Bone count is not correct");
+                    return;
+                }
+
+                var valueList = value.ToList();
+
+                for (int i = 0; i < bones; i++)
+                {
+                    var tx = valueList[i];
+
+                    SetBoneTransform(i, tx, false);
+                }
+            }
+        }
+
+        public IEnumerable<Transform> LocalBones
+        {
+            get => GetProperty(nameof(LocalBones), internal_localbones);
+            set => SetProperty(nameof(LocalBones), value, v => internal_localbones = v);
+        }
+
+        /// <summary>
+        /// 
+        /// 
+        /// <para><strong>NOTE:</strong> You should probably not track this and keep a track of Transforms of PhysicBodies</para>
+        /// </summary>
         public IEnumerable<Transform> Bones
         {
             get => GetProperty(nameof(Bones), internal_Bones );
@@ -176,65 +296,75 @@ namespace Tracking
         #endregion
 
 
+        public void T()
+        {
+            
+        }
 
 
-        private int PreviousTickHash { get; set; } = 0;
 
-        // This is a way of recording properties at the end of each tick from the internal physics inside the engine we dont access with normal
-        // commands.
-        //[GameEvent.Physics.PostStep]
+        private Dictionary<string, int> Hashes = new Dictionary<string, int>();
 
-        [GameEvent.Tick.Server]
+        private void TrackCondition(string name, object obj)
+        {
+            if (obj == null) return;
+
+            if (!Hashes.ContainsKey(name))
+                Hashes.Add(name, obj.GetHashCode());
+
+            if ( Hashes[name] == obj.GetHashCode())
+                return;
+            else
+            {
+                Hashes[name] = obj.GetHashCode();
+                Tracker?.Set(name, obj);
+            }
+        }
+        
+        [GameEvent.Physics.PostStep(Priority = int.MaxValue)]
         private void RecordProperties()
         {
             if ( PhysicsBody == null ) return;
 
-            var builtHash1 = HashCode.Combine(Model, Health, Position, Rotation, LocalRotation, LocalPosition, Scale, LocalScale );
+            if (Game.IsClient) return;
 
-            var builtHash2 = HashCode.Combine(LocalVelocity, Velocity, Parent, Owner);
 
-            var builtHash = HashCode.Combine(builtHash1, builtHash2);
+            // TODO: Add Tag Engine/internal? As if these are different to last tick we aint got a clue at this point how this happened here except from Engine probably.
 
-            if(builtHash != PreviousTickHash)
-            {
-                PreviousTickHash = builtHash;
 
-                // TODO: Add Tag Engine/internal? As if these are different to last tick we aint got a clue at this point how this happened here except from Engine probably.
+            
 
-                Tracker?.Set(nameof(Model), Model);
-                Tracker?.Set(nameof(Health), Health);
-                Tracker?.Set(nameof(Position), Position);
-                Tracker?.Set(nameof(Rotation), Rotation);
-                Tracker?.Set(nameof(LocalPosition), LocalPosition);
-                Tracker?.Set(nameof(Scale), Scale);
-                Tracker?.Set(nameof(LocalScale), LocalScale);
+            TrackCondition(nameof(Model), Model);
+            TrackCondition(nameof(Health), Health);
 
-                Tracker?.Set(nameof(LocalVelocity), LocalVelocity);
-                Tracker?.Set(nameof(Velocity), Velocity);
-                Tracker?.Set(nameof(Parent), Parent);
-                Tracker?.Set(nameof(Owner), Owner);
+            // TODO: We need to instead consider a smart detection for related items such as Position and Rotation to
+            // avoid data repitition.
 
-                Tracker?.Set(nameof(Bones), Bones);
+            // or maybe in Position just do:
 
-                /*
-                Model = Model;
-                Health = Health;
-                Position = Position;
-                Rotation = Rotation;
-                LocalRotation = LocalRotation;
-                LocalPosition = LocalPosition;
-                Scale = Scale;
-                LocalScale = LocalScale;
-                Scale = Scale;
-                LocalScale = LocalScale;
+            //Transform.PointToWorld(LocalPosition);
+            // When we're transferring from one to another.
 
-                LocalVelocity = LocalVelocity;
-                Velocity = Velocity;
-                Parent = Parent;
-                Owner = Owner;
-                */
+            TrackCondition(nameof(Position), Position);
+            TrackCondition(nameof(Rotation), Rotation);
+            TrackCondition(nameof(LocalPosition), LocalPosition);
+            TrackCondition(nameof(Scale), Scale);
+            TrackCondition(nameof(LocalScale), LocalScale);
 
-            }
+            TrackCondition(nameof(LocalVelocity), LocalVelocity);
+            TrackCondition(nameof(Velocity), Velocity);
+            TrackCondition(nameof(Parent), Parent);
+            TrackCondition(nameof(Owner), Owner);
+
+
+
+            TrackCondition(nameof(BodyParts), BodyParts);
+
+
+            // You should be using PhysicsGroup for tracking as they basically relate to bones, 99% on this.
+            // But bones keeping to easily able to add bones on top of models to each other etc.
+
+            //TrackCondition(nameof(Bones), Bones);
         }
 
     }

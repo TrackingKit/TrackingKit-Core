@@ -8,7 +8,7 @@ using Sandbox;
 
 namespace DisplacedEntity
 {
-    [Library("Displaced Entity")]
+    [Library("Displaced Entity"), Spawnable]
     public partial class TimeDisplacedModelEntity : TrackingModelEntity
     {
         private TrackingModelEntity DisplacedEntity { get; set; } 
@@ -21,7 +21,7 @@ namespace DisplacedEntity
 
             Model = Model.Load("models/citizen/citizen.vmdl");
 
-            //Model = Cloud.Model("garry.beachball");
+           // Model = Cloud.Model("garry.beachball");
 
 
             SetupPhysicsFromModel(PhysicsMotionType.Dynamic);
@@ -34,41 +34,18 @@ namespace DisplacedEntity
 
 
 
-        [GameEvent.Physics.PostStep]
+        [GameEvent.Physics.PostStep(Priority = int.MaxValue)]
         public void PostStep()
         {
 
             if (WaitScuffedTime < 2f) return;
 
+            if (Tracker == null) return;
 
             var aimtick = Time.Tick - Game.TickRate * 2;
 
 
 
-            //Log.Info(Position);
-
-
-            //DisplacedEntity?.CopyBonesFrom(this, Position, Rotation);
-
-            /*
-            DisplacedEntity?.CopyBonesFrom(this, Position, Rotation);
-
-            if (DisplacedEntity == null)
-            {
-                DisplacedEntity = new TrackingModelEntity
-                {
-                    Model = Model.Load("models/citizen/citizen.vmdl"),
-                    RenderColor = new Color(0, 0, 255, 0.5f),
-                };
-
-                DisplacedEntity.SetupPhysicsFromModel(PhysicsMotionType.Dynamic);
-
-                DisplacedEntity.EnableAllCollisions = false;
-                DisplacedEntity.PhysicsBody.MotionEnabled = false;
-                DisplacedEntity.PhysicsBody.GravityEnabled = false;
-
-            }
-            */
 
             // 1s delay.
             using (var scoped = Tracker.Scope(aimtick) )
@@ -87,23 +64,79 @@ namespace DisplacedEntity
 
                     DisplacedEntity.SetupPhysicsFromModel( PhysicsMotionType.Dynamic );
                     DisplacedEntity.EnableAllCollisions = false;
+
+
+
+                    // IMPORTANT: if you aren't using PhysicsGroup (Multiple physicbodies) to track the entity body then use this
+                    //DisplacedEntity.PhysicsEnabled = false;
                    
                 }
 
 
 
-                if (Tracker.GetKeyExists(nameof(Position)))
+
+                //Log.Info(LocalBodyParts.ElementAt(3).Position - DisplacedEntity.LocalBodyParts.ElementAt(3).Position);
+
+
+                //foreach (var part in LocalBodyParts)
+                //    DebugOverlay.Sphere(part.Position, 1, Color.Blue);
+
+
+
+
+                //foreach (var part in DisplacedEntity.LocalBodyParts)
+                //    DebugOverlay.Sphere(part.Position, 1, Color.Red);
+
+
+                //DisplacedEntity.Bones = Bones;
+                
+
+
+                return;
+                //Log.Info(LocalBodyParts.ElementAt(1).Rotation - DisplacedEntity.LocalBodyParts.ElementAt(1).Rotation);
+
+                if (Tracker.GetKeyExists(nameof(BodyParts)))
                 {
-                    Log.Warning("Used value");
-                    DisplacedEntity.Position = scoped.GetPropertyOrLast<Vector3>(nameof(Position));
+                    var scopedOriginalEntityLocalBodyParts = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(BodyParts));
+
+
+                    //Log.Info("hi");
+
+                     DisplacedEntity.BodyParts = scopedOriginalEntityLocalBodyParts;
+
 
                 }
                 else
                 {
-                    Log.Warning("USed something else");
-                    DisplacedEntity.Position = Position;
+                    Log.Info("Couldnt find");
+                        /*
+                        for (int i = 0; i < DisplacedEntity.PhysicsGroup.BodyCount; i++)
+                        {
 
+                            var replicatedBody = DisplacedEntity.PhysicsGroup.GetBody(i);
+
+                            var originalBody = PhysicsGroup.GetBody(i);
+
+
+                            replicatedBody.Position = originalBody.Position;
+                            replicatedBody.Rotation = originalBody.Rotation;
+                            replicatedBody.BodyType = originalBody.BodyType;
+                        }
+                        */
                 }
+
+
+                Log.Info("hi");
+
+
+                //DisplacedEntity.EnableDrawing = (DisplacedEntity.LocalBodyParts == LocalBodyParts);
+
+                /*
+
+                if (Tracker.GetKeyExists(nameof(Position)))
+                    DisplacedEntity.Position = scoped.GetPropertyOrLast<Vector3>(nameof(Position));
+                else
+                    DisplacedEntity.Position = Position;
 
 
                 if (Tracker.GetKeyExists(nameof(Rotation)))
@@ -112,17 +145,8 @@ namespace DisplacedEntity
                     DisplacedEntity.Rotation = Rotation;
 
 
-                if (Tracker.GetKeyExists(nameof(Bones)))
-                    DisplacedEntity.Bones = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(Bones));
-                else
-                {
-                    DisplacedEntity.Bones = Bones;
+                */
 
-                }
-
-
-
-                //DisplacedEntity.Rotation = scoped.GetPropertyOrLast<Rotation>(nameof(Rotation));
             }
 
 
