@@ -8,15 +8,6 @@ namespace Tracking
     /// </summary>
     public interface ITrackerReadOnly : IDisposable
     {
-        /// <summary>
-        /// Properties in GetObject will use a combinitation of <see cref="GetPropertyOrLast"/> for each property and <see cref="GetKeyExists(string)"/> if no last key.
-        /// You can see <see cref="TrackingEntity"/> as an example.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="tick"></param>
-        /// <returns></returns>
-        T GetObject<T>( T obj, int tick)
-            where T : IManualTrackableObject;
 
         /// <summary>
         /// Gets the value of the property with the specified name at the specified tick.

@@ -146,21 +146,6 @@ namespace Tracking
 
         }
 
-        T ITrackerTickReadOnly.GetObject<T>( T obj )
-        {
-            if (!IsScoped)
-            {
-                Log.Error("Not scoped");
-                return default;
-            }
-
-            Scoped = obj;
-
-            // As its specific tick.
-            SpecificObjectTick = OutputFilterSettings.MinTick;
-
-            return obj;
-        }
             
 
         T ITrackerTickReadOnly.GetPropertyOrLast<T>(string propertyName)

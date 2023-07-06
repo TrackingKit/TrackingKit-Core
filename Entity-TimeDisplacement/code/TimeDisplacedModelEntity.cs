@@ -8,6 +8,7 @@ using Sandbox;
 
 namespace DisplacedEntity
 {
+    /*
     [Library("Displaced Entity"), Spawnable]
     public partial class TimeDisplacedModelEntity : TrackingModelEntity
     {
@@ -151,5 +152,6 @@ namespace DisplacedEntity
 
         }
 
-    }
+    }*/
+
 }
