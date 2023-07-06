@@ -92,11 +92,11 @@ namespace DisplacedEntity
                 
 
 
-                return;
                 //Log.Info(LocalBodyParts.ElementAt(1).Rotation - DisplacedEntity.LocalBodyParts.ElementAt(1).Rotation);
 
                 if (Tracker.GetKeyExists(nameof(BodyParts)))
                 {
+                    
                     var scopedOriginalEntityLocalBodyParts = scoped.GetPropertyOrLast<IEnumerable<Transform>>(nameof(BodyParts));
 
 
@@ -108,7 +108,6 @@ namespace DisplacedEntity
                 }
                 else
                 {
-                    Log.Info("Couldnt find");
                         /*
                         for (int i = 0; i < DisplacedEntity.PhysicsGroup.BodyCount; i++)
                         {
@@ -126,7 +125,6 @@ namespace DisplacedEntity
                 }
 
 
-                Log.Info("hi");
 
 
                 //DisplacedEntity.EnableDrawing = (DisplacedEntity.LocalBodyParts == LocalBodyParts);

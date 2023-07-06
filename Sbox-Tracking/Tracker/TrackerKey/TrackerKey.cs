@@ -5,13 +5,17 @@ namespace Tracking
 {
     public struct TrackerKey : IEquatable<TrackerKey>, IComparable<TrackerKey>
     {
-
+        /// <summary> The property name. </summary>
         public string PropertyName { get; init; }
 
+
+        /// <summary> Current Tick this was recorded. </summary>
         public int Tick { get; init; }
 
+        /// <summary> Current Version logged at this tick. </summary>
         public int Version { get; init; }
 
+        /// <summary> Tags on this tag allowing filtering of keys with tags. </summary>
         public string[] Tags { get; init; }
 
         public int CompareTo(TrackerKey other)

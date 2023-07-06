@@ -8,6 +8,7 @@ using Sandbox;
 
 namespace Tracking.Tests
 {
+    /*
     #if DEBUG
 
     // Helps determine if I messed up somehow can useful for other cases.
@@ -71,7 +72,7 @@ namespace Tracking.Tests
 
         }
 
-        [ConVar.Server("debug_body_show")] private static bool ShowBody { get; set; } = true;
+        [ConVar.Server("debug_body_show")] private static bool ShowBody { get; set; } = false;
 
         [ConVar.Server("debug_bones_show")] private static bool ShowBones { get; set; } = false;
 
@@ -94,11 +95,12 @@ namespace Tracking.Tests
 
             if (ShowBody)
             {
+                Log.Info("body");
 
-                /*
+                // TODO: Do local transform world?
                 foreach (var bodyPart in Original.LocalBodyParts)
-                    DebugOverlay.Sphere(bodyPart.Position, 1, Color.Blue);
-                */
+                    DebugOverlay.Sphere(bodyPart.ToLocal(Original.Parent.Transform).Position, 1, Color.Blue);
+                
                 
                 foreach (var bodyPart in Original.BodyParts)
                     DebugOverlay.Sphere(bodyPart.Position, 2, Color.Red);
@@ -107,6 +109,7 @@ namespace Tracking.Tests
 
             if (ShowBones)
             {
+                Log.Info("bones");
 
                 foreach (var bone in Original.LocalBones)
                     DebugOverlay.Sphere(bone.Position, 1, Color.Blue);
@@ -126,4 +129,5 @@ namespace Tracking.Tests
 
     }
     #endif
+    */
 }
