@@ -8,15 +8,20 @@ using System.Threading.Tasks;
 
 namespace Tracking
 {
-    public abstract partial class BaseTrackingEntityComponent<T> : EntityComponent<T>
-        where T : Entity
+    public partial class TrackingEntityComponent<TEntity> : EntityComponent<TEntity>, ISingletonComponent
+        where TEntity : Entity
     {
-        public ITracker Tracker { get; private set; }
+        protected ITracker Tracker { get; private set; }
+
+        // TODO: maybe readonly part has scope in it etc. and then we 
+        // have interfaces limiting to tick etc.
+        public ITrackerReadOnly TrackerReadOnly => Tracker;
 
 
-        private readonly Dictionary<string, int> Hashes = new Dictionary<string, int>();
 
-        private void TrackCondition(string name, object obj)
+        private readonly Dictionary<string, int> Hashes = new();
+
+        protected void TrackCondition(string name, object obj)
         {
             if (obj == null) return;
 
@@ -36,17 +41,25 @@ namespace Tracking
         // maybe a filter setting. Just keep this code now for avoiding data duplication.
 
         [GameEvent.Physics.PostStep(Priority = int.MaxValue)]
-        public virtual void PostStep()
+        protected virtual void PostStep()
         {
             TrackCondition(nameof(Entity.Position), Entity.Position);
-            TrackCondition(nameof(Entity.Rotation), Entity.Rotation);
             TrackCondition(nameof(Entity.LocalPosition), Entity.LocalPosition);
+
+            TrackCondition(nameof(Entity.Rotation), Entity.Rotation);
+            TrackCondition(nameof(Entity.LocalRotation), Entity.LocalRotation);
+
+
             TrackCondition(nameof(Entity.Scale), Entity.Scale);
             TrackCondition(nameof(Entity.LocalScale), Entity.LocalScale);
 
             TrackCondition(nameof(Entity.LocalVelocity), Entity.LocalVelocity);
             TrackCondition(nameof(Entity.Velocity), Entity.Velocity);
+
+            // TODO: IF we do parent then we can calculate Velocity, Scale etc with parent relative
+            // to local.
             TrackCondition(nameof(Entity.Parent), Entity.Parent);
+
             TrackCondition(nameof(Entity.Owner), Entity.Owner);
         }
 
