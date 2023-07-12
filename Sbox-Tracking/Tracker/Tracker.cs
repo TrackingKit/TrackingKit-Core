@@ -7,7 +7,7 @@ using Sandbox;
 
 namespace Tracking
 {
-    public partial class Tracker : ITracker
+    public partial class Tracker
     {
         // TODO: Linked list, sort out a way of data.
         private readonly SortedDictionary<TrackerKey, object> Values = new SortedDictionary<TrackerKey, object>();

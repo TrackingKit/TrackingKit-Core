@@ -74,15 +74,6 @@ namespace Tracking
 
         public object Scoped { get; set; }
 
-        public T GetObject<T>(T obj, int tick) where T : IManualTrackableObject
-        {
-            SpecificObjectTick = tick;
-
-            Scoped = obj;
-
-            return obj;
-        }
-
 
         public T GetPropertyOrLast<T>(string propertyName, int tick) => GetPropertyDetailedOrLast<T>(propertyName, tick).Last();
 

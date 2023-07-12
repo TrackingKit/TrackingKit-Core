@@ -10,6 +10,8 @@ namespace Tracking
     public partial class TrackingDisplacementEntityComponent<TEntity> : EntityComponent<TEntity>
         where TEntity : Entity, new()
     {
+        // TODO: TDisplacementParam? So we dont just copy TEntity blindlsly. 
+
         public TEntity DisplacementEntity { get; set; }
 
         private TrackingEntityComponent<TEntity> TrackingComponent => Entity?.Components?.Get<TrackingEntityComponent<TEntity>>() ?? default;
