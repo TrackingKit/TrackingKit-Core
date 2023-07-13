@@ -26,6 +26,8 @@ namespace Tracking.RulesService
 
     public partial class TrackerRulesService
     {
+        // TODO: Rules enabled?
+
         protected HashSet<TrackerRule> Rules { get; set; }
 
         public TrackerRulesService()

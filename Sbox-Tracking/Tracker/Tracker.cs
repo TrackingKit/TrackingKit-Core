@@ -9,49 +9,6 @@ using Tracking.RulesService;
 
 namespace Tracking
 {
-    public class TrackerData
-    {
-        private readonly SortedDictionary<TrackerKey, object> Values = new SortedDictionary<TrackerKey, object>();
-        private readonly SortedDictionary<(string PropertyName, int Tick), int> LatestVersions = new SortedDictionary<(string, int), int>();
-
-        public int Count => Values.Count;
-
-        public bool GetKeyExists(string propertyName)
-            => Values.Keys.Where(x => x.PropertyName == propertyName ).Any();
-
-
-        public int GetLatestVersion(string propertyName, int tick)
-        {
-            var key = (PropertyName: propertyName, Tick: tick);
-            LatestVersions.TryGetValue(key, out int latestRecordedVersion);
-            return latestRecordedVersion;
-        }
-
-        public void UpdateVersion(string propertyName, int tick, int version)
-        {
-            var key = (PropertyName: propertyName, Tick: tick);
-            LatestVersions[key] = version;
-        }
-
-        public void AddValue(TrackerKey key, object value)
-        {
-            Values[key] = value;
-        }
-
-        public void RemoveValue(TrackerKey key)
-        {
-            Values.Remove(key);
-
-            // Remove version associated with this key
-            var versionKey = (PropertyName: key.PropertyName, Tick: key.Tick);
-            if (LatestVersions.ContainsKey(versionKey) && LatestVersions[versionKey] == key.Version)
-            {
-                LatestVersions.Remove(versionKey);
-            }
-        }
-
-        public IEnumerable<KeyValuePair<TrackerKey, object>> GetValues() => Values;
-    }
 
 
     public partial class Tracker
@@ -63,7 +20,9 @@ namespace Tracking
             Event.Register(this);
 
             Rules.Register<AllowRule>();
-            Rules.Register<ExpireRule>();
+
+
+            //Rules.Register<ExpireRule>();
         }
 
         ~Tracker() => Event.Unregister(this);
@@ -98,9 +57,16 @@ namespace Tracking
         [GameEvent.Tick.Server]
         protected void Tick()
         {
-            //Log.Info(Data.Count);
+            //Log.Info(Data.RecordedRange.minTick);
+            Log.Info(Data.RecordedRange);
 
-            HandleDelete();
+
+            if (Time.Tick % Game.TickRate == 0)
+            {
+                // TODO: Rule Expire is expensive I think.
+                HandleDelete();
+            }
+
 
             // TODO: duplicate rule
         }
@@ -117,7 +83,7 @@ namespace Tracking
                     keysToCleanUp.Add(value.Key);
             }
 
-            Log.Info($"Deleting: {keysToCleanUp.Count}");
+            //Log.Info($"Deleting: {keysToCleanUp.Count}");
 
             foreach(var key in keysToCleanUp)
                 Data.RemoveValue(key);
@@ -148,8 +114,6 @@ namespace Tracking
                 Tick = tick,
             };
 
-            // Update the version tracker
-            Data.UpdateVersion(propertyName, tick, trackerKey.Version);
 
             // Check rules if can add.
             var result = Rules.GetAll<TrackerRule>().ShortCircuitForResult(c => c.ShouldAdd(propertyName, value));
