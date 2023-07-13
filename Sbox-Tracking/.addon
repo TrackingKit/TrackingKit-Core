@@ -12,7 +12,8 @@
   "HasCode": true,
   "CodePath": ".",
   "PackageReferences": [
-    "local.base"
+    "local.base",
+    "sigma.optionalsharp"
   ],
   "EditorReferences": null,
   "Metadata": {

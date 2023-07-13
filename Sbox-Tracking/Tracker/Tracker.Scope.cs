@@ -4,10 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Sandbox.Gizmo;
 
 namespace Tracking
 {
-    public class OutputFilterSettings
+    public class ScopeSettings
     {
         public int MinTick { get; init; }
 
@@ -22,15 +23,15 @@ namespace Tracking
 
     public partial class Tracker
     {
-        public bool IsScoped => OutputFilterSettings != null;
+        protected bool IsScoped => ScopeSettings != null;
 
-        protected OutputFilterSettings OutputFilterSettings { get; set; }
+        protected ScopeSettings ScopeSettings { get; set; }
 
 
         // We reset Filter once done with scope.
         public void Dispose()
         {
-            OutputFilterSettings = null;
+            ScopeSettings = null;
         }
 
         protected bool CanScope(int minTick, int maxTick, bool supressMessages = true, params string[] idents)
@@ -61,7 +62,7 @@ namespace Tracking
             if (!CanScope(specificTick, specificTick, false, idents)) return null;
 
 
-            OutputFilterSettings = new OutputFilterSettings()
+            ScopeSettings = new ScopeSettings()
             {
                 MinTick = specificTick,
                 MaxTick = specificTick,
@@ -78,14 +79,14 @@ namespace Tracking
             if (!CanScope(minTick, maxTick, false, idents)) return null;
 
 
-            OutputFilterSettings = new OutputFilterSettings()
+            ScopeSettings = new ScopeSettings()
             {
                 MinTick = minTick,
                 MaxTick = maxTick,
                 Tags = idents
             };
 
-            return this;
+            return default;
         }
 
         public ITrackerReadOnly Scope(params string[] idents)
@@ -93,14 +94,14 @@ namespace Tracking
             if (!CanScope(int.MinValue, int.MaxValue, false, idents)) return null;
 
 
-            OutputFilterSettings = new OutputFilterSettings()
+            ScopeSettings = new ScopeSettings()
             {
                 MinTick = int.MinValue,
                 MaxTick = int.MaxValue,
                 Tags = idents
             };
 
-            return this;
+            return default;
         }
 
         public ITrackerReadOnly Scope()
@@ -108,13 +109,13 @@ namespace Tracking
             if (!CanScope(int.MinValue, int.MaxValue, false)) return null;
 
 
-            OutputFilterSettings = new OutputFilterSettings()
+            ScopeSettings = new ScopeSettings()
             {
                 MinTick = int.MinValue,
                 MaxTick = int.MaxValue,
             };
 
-            return this;
+            return default;
         }
 
     }

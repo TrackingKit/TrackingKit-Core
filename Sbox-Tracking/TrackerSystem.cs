@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Sandbox;
+using Sandbox.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +23,7 @@ namespace Tracking
         {
             if (!Values.ContainsKey(obj))
             {
-                Values.Add(obj, new Tracker()); // replace Tracker with your ITracker implementation
+                Values.Add(obj, new Tracker());
             }
         }
 
@@ -35,20 +37,28 @@ namespace Tracking
         /// </summary>
         public static void CleanUp()
         {
-            // TODO:
+            // TODO
         }
 
 
         public static Tracker Get<T>(T obj)
             where T : class
         {
-            return default;
+            Values.TryGetValue(obj, out Tracker value);
+
+            return value;
         }
 
         public static Tracker GetOrRegister<T>(T obj)
             where T : class
         {
-            return default;
+            // TODO: Optimise
+            if (!Values.ContainsKey(obj))
+            {
+                Values.Add(obj, new Tracker());
+            }
+
+            return Values[obj];
         }
 
 
@@ -56,6 +66,24 @@ namespace Tracking
         public static void Clear()
             => Values.Clear();
 
+        
 
+    }
+
+    [Library("test_prop"), Spawnable]
+    public class TestingEntity : ModelEntity
+    {
+
+
+        public override void Spawn()
+        {
+            Components.Add(new TrackingEntityComponent());
+
+            Model = Cloud.Model("garry.beachball");
+
+            SetupPhysicsFromModel(PhysicsMotionType.Dynamic);
+
+            base.Spawn();
+        }
     }
 }

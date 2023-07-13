@@ -9,7 +9,8 @@ namespace Tracking
 {
     // TODO: Should we just let 
 
-    public partial class Tracker : ITrackerReadOnly
+    // NOTE/TODO: Made internal as you shouldnt be creating an instance outside of the system I think, just temporary.
+    public partial class Tracker
     {
         protected bool CanGet( int tick )
         {
@@ -17,7 +18,7 @@ namespace Tracking
             if ( IsScoped )
             {
                 // Is the tick in the range.
-                if ( (tick <= OutputFilterSettings.MinTick) || (tick >= OutputFilterSettings.MaxTick) )
+                if ( (tick <= ScopeSettings.MinTick) || (tick >= ScopeSettings.MaxTick) )
                 {
                     Log.Error("Tick is not in range of scope");
                     return false;
@@ -30,6 +31,7 @@ namespace Tracking
 
         protected IEnumerable<TrackerKey> GetKeysByPropertyName(string propertyName)
         {
+            /*
             var filteredPropertyKeys = Values.Keys
                .Where(x => x.PropertyName == propertyName);
 
@@ -40,6 +42,9 @@ namespace Tracking
             }
 
             return filteredPropertyKeys;
+            */
+
+            return default;
         }
 
         public T GetProperty<T>(string propertyName, int tick) => GetPropertyDetailed<T>(propertyName, tick).Last(); // TODO: Probably unoptimised.
@@ -62,12 +67,15 @@ namespace Tracking
 
             // TODO: Consider Filter Keys also.
 
+            /*
             var filteredValues = filteredKeys.Select(x => Values[x]).OfType<T>();
 
             // TODO: If hides any values due to OfType we spew error instead as this is hiding data
             // that might be corrupted somehow, I think, just needs considering.
 
             return filteredValues;
+            */
+            return default;
         }
 
         public int SpecificObjectTick { get; set; } = 0;
@@ -87,7 +95,9 @@ namespace Tracking
             var specificTickKeys = filteredPropertyKeys
                .Where(x => x.Tick == tick);
 
+            /*
             IEnumerable<T> result;
+
 
             if (specificTickKeys.Count() > 0)
             {
@@ -103,6 +113,9 @@ namespace Tracking
             }
 
             return result;
+            */
+
+            return default;
         }
 
 
@@ -147,7 +160,7 @@ namespace Tracking
                 return default;
             }
 
-            if (!OutputFilterSettings.IsSpecificTick)
+            if (!ScopeSettings.IsSpecificTick)
             {
                 Log.Error("not specific tick");
                 return default;
@@ -155,7 +168,7 @@ namespace Tracking
 
 
 
-            return GetPropertyOrLast<T>(propertyName, OutputFilterSettings.MinTick);
+            return GetPropertyOrLast<T>(propertyName, ScopeSettings.MinTick);
 
         }
 
