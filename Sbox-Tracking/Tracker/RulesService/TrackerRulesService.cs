@@ -26,7 +26,15 @@ namespace Tracking.RulesService
 
     public partial class TrackerRulesService
     {
-        // TODO: Rules enabled?
+        protected ITrackerDataReadOnly Data { get; }
+
+
+        internal TrackerRulesService(ITrackerDataReadOnly data)
+        {
+            Data = data;
+        }
+
+        // TODO: Rules enabled option?
 
         protected HashSet<TrackerRule> Rules { get; set; }
 
@@ -41,7 +49,11 @@ namespace Tracking.RulesService
             var rule = Rules.OfType<T>().FirstOrDefault();
             if (rule == null)
             {
-                rule = new T();
+                rule = new T()
+                {
+
+                };
+
                 Rules.Add(rule);
             }
 

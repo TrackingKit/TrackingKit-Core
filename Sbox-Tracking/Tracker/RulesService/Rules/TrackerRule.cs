@@ -9,6 +9,12 @@ namespace Tracking.Rules
 {
     public abstract class TrackerRule
     {
+        public ITrackerDataReadOnly Data { get; internal init; }
+
+        
+
+
+
 
         // Optional as some rules might not have a context.
 

@@ -13,13 +13,18 @@ namespace Tracking
 
     public partial class Tracker
     {
-        protected TrackerData Data { get; set; } = new();
+        protected TrackerData Data { get; } = new();
 
         internal Tracker()
         {
             Event.Register(this);
 
+            // Requires data.
+            Rules = new TrackerRulesService(Data);
+
+
             Rules.Register<AllowRule>();
+
 
 
             //Rules.Register<ExpireRule>();
@@ -28,12 +33,13 @@ namespace Tracking
         ~Tracker() => Event.Unregister(this);
 
         /// <summary> Rules for Adding and Deleteing data. </summary>
-        public TrackerRulesService Rules { get; set; } = new TrackerRulesService();
+        public TrackerRulesService Rules { get; } 
+
 
 
         // Building
 
-        public HashSet<string> CurrentBuildTags { get; set; } = new HashSet<string>();
+        public HashSet<string> CurrentBuildTags { get; } = new HashSet<string>();
 
 
         /// <summary>

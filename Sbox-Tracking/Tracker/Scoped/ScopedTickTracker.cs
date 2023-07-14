@@ -10,7 +10,7 @@ namespace Tracking
     public partial class ScopedTickTracker : IDisposable
     {
         // Ref
-        private TrackerData Data { get; set; }
+        private ITrackerDataReadOnly Data { get; set; }
 
         private ScopeSettings Settings { get; set; }
 
