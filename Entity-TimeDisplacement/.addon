@@ -1,8 +1,8 @@
 {
-  "Title": "Time Displaced Entity",
+  "Title": "Sandbox - Displacement Tool",
   "Type": "addon",
   "Org": "sigma",
-  "Ident": "time_displaced_entity",
+  "Ident": "time_displacement_tool",
   "Tags": "runtime",
   "Schema": 1,
   "HasAssets": true,
@@ -24,6 +24,7 @@
     "RenderMaxs": "-1,-1,-1",
     "Summary": "",
     "Description": "",
-    "Public": true
+    "Public": true,
+    "ParentPackage": "facepunch.sandbox"
   }
 }
