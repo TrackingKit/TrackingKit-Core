@@ -18,94 +18,161 @@ namespace Tracking
         public T Get<T>(string propertyName, int tick)
         {
 
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == tick) // Get in tick position.
-                .Select(pair => pair.Value);
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick == tick); // Get in tick position.
 
-            if (!result.Any())
+            if (!query.Any())
             {
                 Log.Error($"No valid found for {propertyName}, {tick}");
                 return default;
             }
 
-            return (T)result.First();
+            // Highest version
+            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
+
+            return (T)itemToSelect.Value;
         }
 
         public T GetOrDefault<T>(string propertyName, int tick, T defaultValue)
         {
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == tick)
-                .Select(pair => pair.Value)
-                .DefaultIfEmpty(defaultValue)
-                .First();
+            var query = Data.Get(propertyName, Settings)
+               .Where(pair => pair.Key.Tick == tick); // Get in tick position.
 
-            return (T)result;
+            if (!query.Any())
+            {
+                return defaultValue;
+            }
+
+            // Highest version
+            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
+
+            return (T)itemToSelect.Value;
         }
 
         public T GetOrPrevious<T>(string propertyName, int tick)
         {
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick <= tick)
-                .OrderByDescending(pair => pair.Key.Tick)
-                .Select(pair => pair.Value)
-                .DefaultIfEmpty(default(T))
-                .First();
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick <= tick); // Get below or equal to tick amount
+            
+            if (!query.Any())
+            {
+                Log.Error("No values found of that type");
+                return default;
+            }
 
-            return (T)result;
+            query = query.OrderByDescending(pair => pair.Key.Tick) // Order by descending tick rate
+                .ThenByDescending(pair => pair.Key.Version); // Then by descending version
+
+            // The first item will have the highest tick and version.
+            var itemToSelect = query.First();
+
+            return (T)itemToSelect.Value;
         }
 
         public T GetOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
         {
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick <= tick)
-                .OrderByDescending(pair => pair.Key.Tick)
-                .Select(pair => pair.Value)
-                .DefaultIfEmpty(defaultValue)
-                .First();
+            var query = Data.Get(propertyName, Settings)
+               .Where(pair => pair.Key.Tick <= tick); // Get below or equal to tick amount
 
-            return (T)result;
+            if (!query.Any())
+            {
+                return defaultValue;
+            }
+
+            query = query.OrderByDescending(pair => pair.Key.Tick) // Order by descending tick rate
+                .ThenByDescending(pair => pair.Key.Version); // Then by descending version
+
+            // The first item will have the highest tick and version.
+            var itemToSelect = query.First();
+
+            return (T)itemToSelect.Value;
         }
 
 
 
 
-
+        // TODO: test.
         public IEnumerable<T> GetDetailed<T>(string propertyName, int tick)
         {
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == tick)
-                .Select(pair => (T)pair.Value);
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick == tick);
 
-            return result.Any() ? result : throw new Exception("No values found at the given tick");
+            if(!query.Any())
+            {
+                Log.Error("Failed to find any values");
+                return default;
+            }
+
+
+            query = query.OrderByDescending(x => x.Key.Version); // Order by highest version.
+
+            var itemsToSelect = query.Select( x => x.Value );
+
+            return (IEnumerable<T>)itemsToSelect;
         }
 
-        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, int tick, T defaultValue)
+
+        // TODO: Below is pretty much probably not done right, I need to go over this.
+
+
+
+        // TODO: test.
+        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
         {
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == tick)
-                .Select(pair => (T)pair.Value);
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick == tick);
 
-            return result.Any() ? result : Enumerable.Repeat(defaultValue, 1);
+            if (!query.Any())
+            {
+                return defaultValue;
+            }
+
+            query = query.OrderByDescending(x => x.Key.Version); // Order by highest version.
+
+
+            var itemsToSelect = query.Select(x => x.Value);
+
+
+            return (IEnumerable<T>)itemsToSelect;
         }
 
+        // TODO: Test.
         public IEnumerable<T> GetDetailedOrPrevious<T>(string propertyName, int tick)
         {
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick <= tick)
-                .OrderByDescending(pair => pair.Key.Tick)
-                .Select(pair => (T)pair.Value);
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick <= tick); // Tick or less value.
 
-            return result.Any() ? result : throw new Exception("No values found at or before the given tick");
+            if(!query.Any())
+            {
+                Log.Error("No values found");
+                return default;
+            }
+
+            query = query.OrderByDescending(pair => pair.Key.Version);
+
+            var itemsToSelect = query.Select(x => x.Value);
+
+
+            return (IEnumerable<T>)itemsToSelect;
         }
 
-        public IEnumerable<T> GetDetailedOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
+        // TODO: Test.
+        public IEnumerable<T> GetDetailedOrPreviousOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
         {
-            var result = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick <= tick)
-                .OrderByDescending(pair => pair.Key.Tick)
-                .Select(pair => (T)pair.Value);
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick <= tick); // Tick or less value.
 
-            return result.Any() ? result : Enumerable.Repeat(defaultValue, 1);
+            if (!query.Any())
+            {
+                return defaultValue;
+            }
+
+            query = query.OrderByDescending(pair => pair.Key.Version);
+
+            var itemsToSelect = query.Select(x => x.Value);
+
+
+            return default;
         }
 
 

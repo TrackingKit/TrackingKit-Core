@@ -10,7 +10,6 @@ using Tracking.RulesService;
 namespace Tracking
 {
 
-
     public partial class Tracker
     {
         protected TrackerData Data { get; } = new();
@@ -22,13 +21,10 @@ namespace Tracking
             // Requires data.
             Rules = new TrackerRulesService(Data);
 
-
+            // TODO: Remove from here.
             Rules.Register<AllowRule>();
             Rules.Register<DuplicateRule>();
 
-
-
-            //Rules.Register<ExpireRule>();
         }
 
         ~Tracker() => Event.Unregister(this);

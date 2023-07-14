@@ -13,15 +13,10 @@ namespace Tracking
         
         protected bool CanScope(int minTick, int maxTick, bool supressMessages = true, params string[] idents)
         {
-           
-
             if(minTick > maxTick)
             {
                 if (!supressMessages) Log.Warning("MinTick greater than MaxTick");
             }
-
-
-
 
             return true;
         }
