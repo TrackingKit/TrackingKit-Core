@@ -23,6 +23,7 @@ namespace Tracking.Rules
 
         public void AddProperty(string propertyName, Filter filter)
         {
+
             if (!Properties.ContainsKey(propertyName))
             {
                 Properties.Add(propertyName, filter);
@@ -38,11 +39,12 @@ namespace Tracking.Rules
         }
 
 
-        public override Optional<bool> ShouldAdd(string propertyName, object obj)
+
+        public override bool? ShouldAdd(string propertyName, object obj)
         {
             // Check if the propertyName or obj is null
             if (propertyName == null || obj == null)
-                return Optional<bool>.None;
+                return null;
 
             // Check if the property exists in the Properties dictionary
             if (Properties.TryGetValue(propertyName, out Filter propertyFilter))
@@ -50,20 +52,20 @@ namespace Tracking.Rules
                 // If property is blacklisted, don't add
                 if (propertyFilter == Filter.Blacklisted)
                 {
-                    return Optional<bool>.Of(false);
+                    return false;
                 }
 
                 // If property is whitelisted, add
                 if (propertyFilter == Filter.Whitelisted)
                 {
-                    return Optional<bool>.Of(true);
+                    return true;
                 }
             }
 
             // If property doesn't exist in the dictionary, check the Default filter
             if (Default == Filter.Blacklisted)
             {
-                return Optional<bool>.Of(false);
+                return false;
             }
 
             return base.ShouldAdd(propertyName, obj);

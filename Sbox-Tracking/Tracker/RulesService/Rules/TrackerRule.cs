@@ -18,9 +18,9 @@ namespace Tracking.Rules
 
         // Optional as some rules might not have a context.
 
-        public virtual Optional<bool> ShouldAdd(string propertyName, object obj) => Optional<bool>.None;
+        public virtual bool? ShouldAdd(string propertyName, object obj) => null;
 
-        public virtual Optional<bool> ShouldDelete(TrackerKey key, object obj) => Optional<bool>.None;
+        public virtual bool? ShouldDelete(TrackerKey key, object obj) => null;
 
 
     }

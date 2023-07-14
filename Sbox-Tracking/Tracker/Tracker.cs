@@ -24,6 +24,7 @@ namespace Tracking
 
 
             Rules.Register<AllowRule>();
+            Rules.Register<DuplicateRule>();
 
 
 
@@ -64,7 +65,7 @@ namespace Tracking
         protected void Tick()
         {
             //Log.Info(Data.RecordedRange.minTick);
-            Log.Info(Data.RecordedRange);
+            Log.Info(Data.Count);
 
 
             if (Time.Tick % Game.TickRate == 0)
@@ -83,9 +84,9 @@ namespace Tracking
 
             foreach(var value in Data.GetValues())
             {
-                var result = Rules.GetAll<TrackerRule>().ShortCircuitForResult(c => c.ShouldDelete(value.Key, value.Value));
+                var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value));
 
-                if(result.HasValue && result.Value)
+                if(result.HasValue && result.Value == true)
                     keysToCleanUp.Add(value.Key);
             }
 
@@ -123,7 +124,7 @@ namespace Tracking
 
 
             // Check rules if can add.
-            var result = Rules.GetAll<TrackerRule>().ShortCircuitForResult(c => c.ShouldAdd(propertyName, value));
+            var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldAdd(propertyName, value));
 
             if (result.HasValue && result.Value == false)
                 return;

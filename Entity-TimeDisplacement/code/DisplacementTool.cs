@@ -14,7 +14,10 @@ namespace Sandbox
     {
         public override void Simulate()
         {
-            if (!Game.IsServer)
+            bool pressed = Input.Pressed("attack1");
+
+
+            if (!Game.IsServer || !pressed)
                 return;
 
             using (Prediction.Off())
@@ -28,7 +31,9 @@ namespace Sandbox
                 if (tr.Entity is not ModelEntity modelEnt)
                     return;
 
-                modelEnt.Components.Add(new TrackingDisplacementEntityComponent());
+                var tracker = TrackerSystem.Get(modelEnt);
+
+                modelEnt.Components.GetOrCreate<TrackingDisplacementEntityComponent>();
             }
 
             base.Simulate();

@@ -69,21 +69,4 @@ namespace Tracking
         
 
     }
-
-    [Library("test_prop"), Spawnable]
-    public class TestingEntity : ModelEntity
-    {
-
-
-        public override void Spawn()
-        {
-            Components.Add(new TrackingEntityComponent());
-
-            Model = Cloud.Model("garry.beachball");
-
-            SetupPhysicsFromModel(PhysicsMotionType.Dynamic);
-
-            base.Spawn();
-        }
-    }
 }

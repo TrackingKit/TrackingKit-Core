@@ -13,6 +13,14 @@ namespace Sandbox.Components
         protected Tracker Tracker => Tracking.TrackerSystem.GetOrRegister(Entity);
 
 
+        protected override void OnActivate()
+        {
+            // Server and client
+            TrackerSystem.Register(Entity);
+
+            base.OnActivate();
+        }
+
         public bool TrackBodyParts { get; set; } = false;
 
         public bool TrackBones { get; set; } = false;

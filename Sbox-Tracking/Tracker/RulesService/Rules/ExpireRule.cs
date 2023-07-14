@@ -15,11 +15,11 @@ namespace Tracking.Rules
         /// <summary> How much till it expires </summary>
         public int Seconds { get; set; } = 5;
 
-        public override Optional<bool> ShouldDelete(TrackerKey key, object obj)
+        public override bool? ShouldDelete(TrackerKey key, object obj)
         {
 
             if(key.TimeSince > Seconds)
-                return Optional<bool>.Of(true);
+                return true;
 
 
             return base.ShouldDelete(key, obj);

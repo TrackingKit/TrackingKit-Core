@@ -36,12 +36,8 @@ namespace Tracking.RulesService
 
         // TODO: Rules enabled option?
 
-        protected HashSet<TrackerRule> Rules { get; set; }
+        protected HashSet<TrackerRule> Rules { get; set; } = new HashSet<TrackerRule>(new TrackerRuleTypeComparer());
 
-        public TrackerRulesService()
-        {
-            Rules = new HashSet<TrackerRule>(new TrackerRuleTypeComparer());
-        }
 
         public T GetOrRegister<T>()
             where T : TrackerRule, new()

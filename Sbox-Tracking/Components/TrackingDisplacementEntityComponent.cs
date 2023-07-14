@@ -33,7 +33,7 @@ namespace Sandbox.Components
         }
 
 
-        [GameEvent.Tick]
+        [GameEvent.Tick.Server]
         public void Tick()
         {
             using( var tracker = Tracker.Scope() )
