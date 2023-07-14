@@ -29,6 +29,12 @@ namespace Sandbox.Components
             else
                 DisplacedEntity = new Entity();
 
+            if(Entity is ModelEntity targetModelEnt && DisplacedEntity is ModelEntity displacementModelEntity)
+            {
+                displacementModelEntity.Model = targetModelEnt.Model;
+                displacementModelEntity.RenderColor = new Color(0, 0, 100, 0.6f);
+            }
+
             base.OnActivate();
         }
 
@@ -43,19 +49,26 @@ namespace Sandbox.Components
             {
                 // Entity part
 
-                //DisplacedEntity.Position = tracker.GetOrPreviousOrDefault<Vector3>(nameof(Entity.Position), Time.Tick, Entity.Position);
-                //DisplacedEntity.Rotation = tracker.GetOrPreviousOrDefault<Rotation>(nameof(Entity.Rotation), Time.Tick, Entity.Rotation);
+                DisplacedEntity.Position = tracker.GetOrPreviousOrDefault<Vector3>(nameof(Entity.Position), Time.Tick - 100, Entity.Position);
+                DisplacedEntity.Rotation = tracker.GetOrPreviousOrDefault<Rotation>(nameof(Entity.Rotation), Time.Tick - 100, Entity.Rotation);
 
 
-                var item = tracker.GetOrPrevious<Vector3>(nameof(Sandbox.Entity.Position), Time.Tick - 100);
 
-                Log.Info(item);
+                //Log.Info(item);
 
                 //Log.Info(tracker.Get<Vector3>(nameof(Entity.Position), Time.Tick - 100));
 
             }
 
 
+        }
+
+
+        protected override void OnDeactivate()
+        {
+            DisplacedEntity.Delete();
+
+            base.OnDeactivate();
         }
 
 
