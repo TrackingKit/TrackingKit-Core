@@ -6,7 +6,7 @@ namespace Tracking
 {
     public partial class ScopedTracker : IDisposable
     {
-        private TrackerData Data { get; set; }
+        private ITrackerDataReadOnly Data { get; set; }
         private ScopeSettings Settings { get; set; }
 
         internal ScopedTracker(TrackerData data, ScopeSettings settings)
@@ -45,6 +45,7 @@ namespace Tracking
 
         public T GetOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
         {
+
             // ...
             return default;
         }

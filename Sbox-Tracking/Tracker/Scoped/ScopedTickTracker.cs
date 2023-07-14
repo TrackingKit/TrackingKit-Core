@@ -26,6 +26,9 @@ namespace Tracking
             return default;
         }
 
+        // TODO: Should Get have a option for version? and so should ScopeTracker etc.!!!
+        // public T Get<T>(string propertyName, int version); 
+
         public T GetOrDefault<T>(string propertyName, T defaultValue)
         {
             // ... function to get the value or return default if none exists

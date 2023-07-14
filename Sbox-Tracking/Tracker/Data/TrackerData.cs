@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Tracking
 {
-    public class TrackerData
+    public class TrackerData : ITrackerDataReadOnly
     {
         private readonly SortedDictionary<TrackerKey, object> Values = new SortedDictionary<TrackerKey, object>();
         private readonly SortedDictionary<(string PropertyName, int Tick), int> LatestVersions = new SortedDictionary<(string, int), int>();
