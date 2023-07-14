@@ -65,7 +65,7 @@ namespace Tracking
         protected void Tick()
         {
             //Log.Info(Data.RecordedRange.minTick);
-            Log.Info(Data.Count);
+            //Log.Info(Data.Count);
 
 
             if (Time.Tick % Game.TickRate == 0)

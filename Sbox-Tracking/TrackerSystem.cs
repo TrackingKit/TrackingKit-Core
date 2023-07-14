@@ -3,70 +3,100 @@ using Sandbox.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Tracking;
 
 namespace Tracking
 {
-    // IRules
-    // public bool AllowDuplcates
-    // get => Rules contains Duplicates
-    // set => if value == true (Add Rules) else (Remove Ruels)
-
     public static partial class TrackerSystem
     {
-        private static Dictionary<object, Tracker> Values { get; set; } = new Dictionary<object, Tracker>();
+        private static Dictionary<WeakReference<object>, Tracker> Values { get; set; } = new();
 
-        public static void Register<T>(T obj) 
-            where T : class
+        public static void Register<T>(T obj) where T : class
         {
-            if (!Values.ContainsKey(obj))
+            var weakReference = new WeakReference<object>(obj);
+
+            if (!Values.Keys.Any(wr => wr.TryGetTarget(out var target) && Equals(target, obj)))
             {
-                Values.Add(obj, new Tracker());
+                var tracker = new Tracker();
+                Values.Add(weakReference, tracker);
+
+                TrackerEvents.AddedAttribute.Run(obj, tracker);
             }
         }
 
         public static void Unregister<T>(T obj) where T : class
         {
-            Values.Remove(obj);
+            var weakReference = Values.Keys.FirstOrDefault(wr => wr.TryGetTarget(out var target) && Equals(target, obj));
+
+            if (weakReference != null)
+            {
+                Values.Remove(weakReference);
+            }
         }
 
-        /// <summary>
-        /// Removes any dead refernces.
-        /// </summary>
+        // TODO: not each tick.
+        [GameEvent.Tick]
         public static void CleanUp()
         {
-            // TODO
+            var deadKeys = GetDeadKeys();
+            RemoveDeadKeys(deadKeys);
         }
 
-
-        public static Tracker Get<T>(T obj)
-            where T : class
+        private static List<WeakReference<object>> GetDeadKeys()
         {
-            Values.TryGetValue(obj, out Tracker value);
+            var deadKeys = new List<WeakReference<object>>();
 
-            return value;
-        }
-
-        public static Tracker GetOrRegister<T>(T obj)
-            where T : class
-        {
-            // TODO: Optimise
-            if (!Values.ContainsKey(obj))
+            foreach (var key in Values.Keys)
             {
-                Values.Add(obj, new Tracker());
+                if (!key.TryGetTarget(out var target))
+                {
+                    deadKeys.Add(key);
+                }
+                else
+                {
+                    if (target is IEntity targetEntity && !targetEntity.IsValid)
+                    {
+                        deadKeys.Add(key);
+                    }
+                }
             }
 
-            return Values[obj];
+            return deadKeys;
         }
 
+        private static void RemoveDeadKeys(List<WeakReference<object>> deadKeys)
+        {
+            foreach (var key in deadKeys)
+            {
+                TrackerEvents.RemovedAttribute.Run(Values[key]);
+                Values.Remove(key);
+            }
+        }
 
+        public static Tracker Get<T>(T obj) where T : class
+        {
+            var weakReference = Values.Keys.FirstOrDefault(wr => wr.TryGetTarget(out var target) && Equals(target, obj));
 
-        public static void Clear()
-            => Values.Clear();
+            return weakReference != null ? Values[weakReference] : null;
+        }
 
-        
+        public static Tracker GetOrRegister<T>(T obj) where T : class
+        {
+            var weakReference = Values.Keys.FirstOrDefault(wr => wr.TryGetTarget(out var target) && Equals(target, obj));
 
+            if (weakReference == null)
+            {
+                weakReference = new WeakReference<object>(obj);
+                var tracker = new Tracker();
+
+                Values.Add(weakReference, tracker);
+
+                TrackerEvents.AddedAttribute.Run(obj, tracker);
+            }
+
+            return Values[weakReference];
+        }
+
+        public static void Clear() => Values.Clear();
     }
 }
