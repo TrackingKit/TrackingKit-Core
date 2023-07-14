@@ -41,6 +41,11 @@ namespace Sandbox.Components
         protected virtual void RecordHandle()
         {
             // Entity Properties.
+            Tracker?.Add(nameof(Entity.Position), Entity.Position);
+            Tracker?.Add(nameof(Entity.Rotation), Entity.Rotation);
+
+
+
             Tracker?.Add(nameof(Entity.LocalPosition), Entity.LocalPosition);
             Tracker?.Add(nameof(Entity.LocalRotation), Entity.LocalRotation);
             Tracker?.Add(nameof(Entity.Parent), Entity.Parent);

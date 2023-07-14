@@ -36,15 +36,22 @@ namespace Sandbox.Components
         [GameEvent.Tick.Server]
         public void Tick()
         {
+            if (Tracker == null)
+                return;
+
             using( var tracker = Tracker.Scope() )
             {
                 // Entity part
 
-                DisplacedEntity.Position = tracker.GetOrPreviousOrDefault<Vector3>(nameof(Entity.Position), Time.Tick, Entity.Position);
-                DisplacedEntity.Rotation = tracker.GetOrPreviousOrDefault<Rotation>(nameof(Entity.Rotation), Time.Tick, Entity.Rotation);
+                //DisplacedEntity.Position = tracker.GetOrPreviousOrDefault<Vector3>(nameof(Entity.Position), Time.Tick, Entity.Position);
+                //DisplacedEntity.Rotation = tracker.GetOrPreviousOrDefault<Rotation>(nameof(Entity.Rotation), Time.Tick, Entity.Rotation);
 
-                var item = tracker.GetOrPreviousOrDefault(nameof(Entity.Position), Time.Tick, Entity.Position);
 
+                var item = tracker.GetOrPrevious<Vector3>(nameof(Sandbox.Entity.Position), Time.Tick - 100);
+
+                Log.Info(item);
+
+                //Log.Info(tracker.Get<Vector3>(nameof(Entity.Position), Time.Tick - 100));
 
             }
 

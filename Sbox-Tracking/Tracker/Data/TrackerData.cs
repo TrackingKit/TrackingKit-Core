@@ -14,10 +14,15 @@ namespace Tracking
         public bool GetKeyExists(string propertyName)
             => Values.Keys.Where(x => x.PropertyName == propertyName ).Any();
 
+        public IEnumerable<string> Keys
+                => LatestVersions.Keys.Select(k => k.PropertyName).Distinct();
+
+
         private int minTick = int.MaxValue;
         private int maxTick = int.MinValue;
 
         public (int minTick, int maxTick) RecordedRange => (minTick, maxTick);
+
 
 
         public int GetLatestVersion(string propertyName, int tick)
@@ -59,6 +64,17 @@ namespace Tracking
                 minTick = LatestVersions.Count > 0 ? LatestVersions.Keys.Min(k => k.Tick) : int.MaxValue;
                 maxTick = LatestVersions.Count > 0 ? LatestVersions.Keys.Max(k => k.Tick) : int.MinValue;
             }
+        }
+
+        public IEnumerable<KeyValuePair<TrackerKey, object>> Get(string propertyName, ScopeSettings settings)
+        {
+            return GetValues()
+                .Where(pair => 
+                    pair.Key.PropertyName == propertyName
+                    && pair.Key.Tick >= settings.MinTick
+                    && pair.Key.Tick <= settings.MaxTick
+                    && (settings.Tags == null || settings.Tags.All(tag => pair.Key.Tags.Contains(tag)))
+                    );
         }
 
         public IEnumerable<KeyValuePair<TrackerKey, object>> GetValues() => Values;

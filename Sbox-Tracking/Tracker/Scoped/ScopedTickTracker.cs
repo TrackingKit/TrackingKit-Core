@@ -22,41 +22,69 @@ namespace Tracking
 
         public T Get<T>(string propertyName)
         {
-            // ... function to get the value
-            return default;
-        }
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
 
-        // TODO: Should Get have a option for version? and so should ScopeTracker etc.!!!
-        // public T Get<T>(string propertyName, int version); 
+            if( !query.Any() )
+            {
+                Log.Error("No values found of that type");
+                return default;
+            }
+
+            // Highest version.
+            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
+
+            return (T)itemToSelect.Value;
+        }
 
         public T GetOrDefault<T>(string propertyName, T defaultValue)
         {
-            // ... function to get the value or return default if none exists
-            return default;
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
+
+            if (!query.Any())
+            {
+                return defaultValue;
+            }
+
+            // Highest version.
+            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
+
+            return (T)itemToSelect.Value;
         }
-
-
 
         public IEnumerable<T> GetDetailed<T>(string propertyName)
         {
-            // ... function to get all values
-            return default;
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
+
+
+
+            return query.Select(pair => (T)pair.Value);
         }
 
-        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName)
+        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, IEnumerable<T> defaultValue)
         {
-            // ... function to get all values or return default if none exists
-            return default;
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
+
+            if (!query.Any())
+            {
+                return defaultValue;
+            }
+
+            return query.Select(pair => (T)pair.Value);
         }
-
-
-
 
         public void Dispose()
         {
+            // TODO: data cached in this?
             Data = null;
             Settings = null;
         }
+
+
+
     }
 
 

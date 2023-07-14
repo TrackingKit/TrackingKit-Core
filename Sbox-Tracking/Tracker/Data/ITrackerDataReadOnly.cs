@@ -15,5 +15,9 @@ namespace Tracking
 
         IEnumerable<KeyValuePair<TrackerKey, object>> GetValues();
 
+        IEnumerable<KeyValuePair<TrackerKey, object>> Get(string propertyName, ScopeSettings settings);
+
+        IEnumerable<string> Keys { get; }
+
     }
 }
