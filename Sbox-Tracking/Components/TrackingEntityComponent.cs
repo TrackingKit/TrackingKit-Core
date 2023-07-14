@@ -33,23 +33,23 @@ namespace Sandbox.Components
         protected virtual void RecordHandle()
         {
             // Entity Properties.
-            Tracker?.Set(nameof(Entity.LocalPosition), Entity.LocalPosition);
-            Tracker?.Set(nameof(Entity.LocalRotation), Entity.LocalRotation);
-            Tracker?.Set(nameof(Entity.Parent), Entity.Parent);
-            Tracker?.Set(nameof(Entity.Owner), Entity.Owner);
+            Tracker?.Add(nameof(Entity.LocalPosition), Entity.LocalPosition);
+            Tracker?.Add(nameof(Entity.LocalRotation), Entity.LocalRotation);
+            Tracker?.Add(nameof(Entity.Parent), Entity.Parent);
+            Tracker?.Add(nameof(Entity.Owner), Entity.Owner);
 
-            Tracker?.Set(nameof(Entity.Velocity), Entity.Velocity);
-            Tracker?.Set(nameof(Entity.BaseVelocity), Entity.BaseVelocity);
-            Tracker?.Set(nameof(Entity.LocalVelocity), Entity.LocalVelocity);
+            Tracker?.Add(nameof(Entity.Velocity), Entity.Velocity);
+            Tracker?.Add(nameof(Entity.BaseVelocity), Entity.BaseVelocity);
+            Tracker?.Add(nameof(Entity.LocalVelocity), Entity.LocalVelocity);
 
 
             if (Entity is ModelEntity modelEntity)
             {
                 if (TrackBodyParts)
-                    Tracker?.Set("BodyParts", modelEntity.Name); // TODO Actual get bodyparts.
+                    Tracker?.Add("BodyParts", modelEntity.Name); // TODO Actual get bodyparts.
 
                 if (TrackBones)
-                    Tracker?.Set("Bones", modelEntity.Name); // TODO: Actual bones.
+                    Tracker?.Add("Bones", modelEntity.Name); // TODO: Actual bones.
             }
             else
                 return; // No point carrying on if not this level.

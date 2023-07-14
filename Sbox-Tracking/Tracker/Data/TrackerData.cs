@@ -47,6 +47,7 @@ namespace Tracking
 
             // Remove version associated with this key
             var versionKey = (PropertyName: key.PropertyName, Tick: key.Tick);
+
             if (LatestVersions.ContainsKey(versionKey) && LatestVersions[versionKey] == key.Version)
             {
                 LatestVersions.Remove(versionKey);

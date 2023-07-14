@@ -12,8 +12,8 @@ namespace Tracking
         public TrackerKey()
         {
             TimeSince = 0;
-        }
 
+        }
 
         /// <summary> Current Tick this was recorded. </summary>
         public int Tick { get; init; }

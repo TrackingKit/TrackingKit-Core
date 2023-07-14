@@ -92,19 +92,20 @@ namespace Tracking
 
 
 
-        // TODO: maybe allow people to set back in time but I aint sure on that at all.
-        // It might feel a bit flawed.
-
         /// <summary>
-        /// Sets the value of a property with the specified name within the current groups.
+        /// Adds the value of a property with the specified name within the current groups.
         /// </summary>
         /// <param name="propertyName">The name of the property.</param>
         /// <param name="value">The value of the property.</param>
+        /// <param name="tick"></param>
         /// <param name="idents">The identifiers for the property.</param>
-        public void Set(string propertyName, object value, params string[] idents)
+        public void Add(string propertyName, object value, int tick, params string[] idents)
         {
-            int tick = Time.Tick;
             int latestRecordedVersion = Data.GetLatestVersion(propertyName, tick);
+
+            var keyVersion = latestRecordedVersion + 1;
+
+            var keyTags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray();
 
             TrackerKey trackerKey = new()
             {
@@ -124,7 +125,28 @@ namespace Tracking
             Data.AddValue(trackerKey, value);
         }
 
+        public void Add(string propertyName, object value, params string[] idents)
+            => Add(propertyName, value, Time.Tick, idents);
 
+        [Obsolete("Needs implementing")]
+        public void Remove(string propertyName, int tick)
+        {
+            
+        }
+
+
+        [Obsolete("Needs implementing")]
+        public void RemoveAllVersions(string propertyName, int tick, int version)
+        {
+            TrackerKey trackerKey = new()
+            {
+                PropertyName = propertyName,
+                Version = version,
+                Tick = tick,
+            };
+
+            Data.RemoveValue(trackerKey);
+        }
 
 
     }
