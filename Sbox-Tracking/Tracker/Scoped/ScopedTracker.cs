@@ -1,12 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Tracking
 {
-    public partial class ScopedTracker
+    public partial class ScopedTracker : IDisposable
     {
-        private TrackerData Data { get; }
-        private ScopeSettings Settings { get; }
+        private TrackerData Data { get; set; }
+        private ScopeSettings Settings { get; set; }
 
         internal ScopedTracker(TrackerData data, ScopeSettings settings)
         {
@@ -14,16 +15,16 @@ namespace Tracking
             Settings = settings;
         }
 
-        public IEnumerable<T> GetDetailed<T>(string propertyName, int tick)
-        {
-            // ... 
-            return default;
-        }
-
         public T Get<T>(string propertyName, int tick)
         {
             var detailed = GetDetailed<T>(propertyName, tick);
             return detailed.Any() ? detailed.Last() : default;
+        }
+
+        public T GetOrDefault<T>(string propertyName, int tick, T defaultValue)
+        {
+            var detailed = GetDetailed<T>(propertyName, tick);
+            return detailed.Any() ? detailed.Last() : defaultValue;
         }
 
         public T GetOrPrevious<T>(string propertyName, int tick)
@@ -42,6 +43,28 @@ namespace Tracking
             }
         }
 
+        public T GetOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
+        {
+            // ...
+            return default;
+        }
+
+
+
+
+
+        public IEnumerable<T> GetDetailed<T>(string propertyName, int tick)
+        {
+            // ... 
+            return default;
+        }
+
+        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, int tick, T defaultValue)
+        {
+            var detailed = GetDetailed<T>(propertyName, tick);
+            return detailed.Any() ? detailed : new List<T> { defaultValue };
+        }
+
         public IEnumerable<T> GetDetailedOrPrevious<T>(string propertyName, int tick)
         {
             var detailed = GetDetailed<T>(propertyName, tick);
@@ -57,22 +80,17 @@ namespace Tracking
             }
         }
 
-        public T GetOrDefault<T>(string propertyName, int tick, T defaultValue)
+        public IEnumerable<T> GetDetailedOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
         {
-            var detailed = GetDetailed<T>(propertyName, tick);
-            return detailed.Any() ? detailed.Last() : defaultValue;
-        }
-
-        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, int tick, T defaultValue)
-        {
-            var detailed = GetDetailed<T>(propertyName, tick);
-            return detailed.Any() ? detailed : new List<T> { defaultValue };
-        }
-
-        public T GetOrLastOrDefault<T>(string propertyName, int tick, T defaultValue)
-        {
-            // ...
             return default;
+        }
+
+
+
+        public void Dispose()
+        {
+            Data = null;
+            Settings = null;
         }
     }
 
