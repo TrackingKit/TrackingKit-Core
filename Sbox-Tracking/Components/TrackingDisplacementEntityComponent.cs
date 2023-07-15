@@ -61,7 +61,6 @@ namespace Sandbox.Components
                 if (tracker.ExistsAtOrBefore(nameof(Entity.Position), previousTick) &&
                      tracker.ExistsAtOrBefore(nameof(Entity.Rotation), previousTick))
                 {
-                    Log.Info("hi");
 
                     DisplacedEntity.EnableDrawing = true;
 
