@@ -50,13 +50,15 @@ namespace Sandbox.Components
             if (Tracker == null)
                 return;
 
-            using( var tracker = Tracker.Scope() )
+            var previousTick = Time.Tick - 100;
+
+
+            using ( var tracker = Tracker.Scope(previousTick, Time.Tick) )
             {
                 // Entity part
 
 
 
-                var previousTick = Time.Tick - 100;
 
                 if (tracker.ExistsAtOrBefore(nameof(Entity.Position), previousTick) &&
                      tracker.ExistsAtOrBefore(nameof(Entity.Rotation), previousTick))
@@ -71,6 +73,7 @@ namespace Sandbox.Components
                     // If not set we set else if done we will just hide again.
                     if (DisplacedEntity.Position != positionOfTracked || DisplacedEntity.Rotation != rotationOfTracker)
                     {
+
                         DisplacedEntity.Position = positionOfTracked;
                         DisplacedEntity.Rotation = rotationOfTracker;
                     }
@@ -78,9 +81,11 @@ namespace Sandbox.Components
                     {
                         DisplacedEntity.EnableDrawing = false;
                     }
+
                 }
                 else
                 {
+
                     DisplacedEntity.EnableDrawing = false;
                 }
 

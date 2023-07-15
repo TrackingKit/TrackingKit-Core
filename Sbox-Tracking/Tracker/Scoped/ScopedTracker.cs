@@ -6,7 +6,7 @@ namespace Tracking
 {
     public partial class ScopedTracker : IDisposable
     {
-        private ITrackerDataReadOnly Data { get; set; }
+        private TrackerData Data { get; set; }
         private ScopeSettings Settings { get; set; }
 
         internal ScopedTracker(TrackerData data, ScopeSettings settings)

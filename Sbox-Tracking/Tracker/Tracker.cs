@@ -76,6 +76,7 @@ namespace Tracking
 
         protected void HandleDelete()
         {
+            /*
             List<TrackerKey> keysToCleanUp = new();
 
             foreach(var value in Data.GetValues())
@@ -91,6 +92,7 @@ namespace Tracking
             foreach(var key in keysToCleanUp)
                 Data.RemoveValue(key);
 
+            */
         }
 
 
@@ -104,28 +106,24 @@ namespace Tracking
         /// <param name="idents">The identifiers for the property.</param>
         public void Add(string propertyName, object value, int tick, params string[] idents)
         {
+            // Getting the latest version recorded for the specified property at a given tick
             int latestRecordedVersion = Data.GetLatestVersion(propertyName, tick);
 
-            var keyVersion = latestRecordedVersion + 1;
+            // Creating a new version by incrementing the latest recorded version
+            var newVersion = latestRecordedVersion + 1;
 
-            var keyTags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray();
+            // Merging identifiers from the current scope with the identifiers passed as parameters
+            var tags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray();
 
-            TrackerKey trackerKey = new()
-            {
-                PropertyName = propertyName,
-                Version = latestRecordedVersion + 1,
-                Tags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray(),
-                Tick = tick,
-            };
-
-
-            // Check rules if can add.
+            // Checking rules to see if the property can be added
             var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldAdd(propertyName, value));
 
+            // If the result is false, we exit the method without adding the property
             if (result.HasValue && result.Value == false)
                 return;
 
-            Data.AddValue(trackerKey, value);
+            // Adding the value with the given property name, tick, new version, value, and tags
+            Data.AddValue(propertyName, tick, newVersion, value, tags);
         }
 
         public void Add(string propertyName, object value, params string[] idents)
@@ -141,14 +139,8 @@ namespace Tracking
         [Obsolete("Needs implementing")]
         public void RemoveAllVersions(string propertyName, int tick, int version)
         {
-            TrackerKey trackerKey = new()
-            {
-                PropertyName = propertyName,
-                Version = version,
-                Tick = tick,
-            };
 
-            Data.RemoveValue(trackerKey);
+            //Data.RemoveValue(trackerKey);
         }
 
 

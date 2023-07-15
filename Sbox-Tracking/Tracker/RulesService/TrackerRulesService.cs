@@ -26,10 +26,10 @@ namespace Tracking.RulesService
 
     public partial class TrackerRulesService
     {
-        protected ITrackerDataReadOnly Data { get; }
+        protected TrackerData Data { get; }
 
 
-        internal TrackerRulesService(ITrackerDataReadOnly data)
+        internal TrackerRulesService(TrackerData data)
         {
             Data = data;
         }
