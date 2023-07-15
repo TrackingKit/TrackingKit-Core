@@ -56,16 +56,21 @@ namespace Sandbox.Components
 
 
 
-                if ( tracker.Exists(nameof(Entity.Position) ) && tracker.Exists(nameof(Entity.Rotation) ) )
+                var previousTick = Time.Tick - 100;
+
+                if (tracker.ExistsAtOrBefore(nameof(Entity.Position), previousTick) &&
+                     tracker.ExistsAtOrBefore(nameof(Entity.Rotation), previousTick))
                 {
+                    Log.Info("hi");
+
                     DisplacedEntity.EnableDrawing = true;
 
-                    var positionOfTracked = tracker.GetOrPrevious<Vector3>(nameof(Entity.Position), Time.Tick - 100);
+                    var positionOfTracked = tracker.GetOrPrevious<Vector3>(nameof(Entity.Position), previousTick);
 
-                    var rotationOfTracker = tracker.GetOrPrevious<Rotation>(nameof(Entity.Rotation), Time.Tick - 100);
+                    var rotationOfTracker = tracker.GetOrPrevious<Rotation>(nameof(Entity.Rotation), previousTick);
 
                     // If not set we set else if done we will just hide again.
-                    if(DisplacedEntity.Position != positionOfTracked || DisplacedEntity.Rotation != rotationOfTracker)
+                    if (DisplacedEntity.Position != positionOfTracked || DisplacedEntity.Rotation != rotationOfTracker)
                     {
                         DisplacedEntity.Position = positionOfTracked;
                         DisplacedEntity.Rotation = rotationOfTracker;
@@ -74,14 +79,10 @@ namespace Sandbox.Components
                     {
                         DisplacedEntity.EnableDrawing = false;
                     }
-
-                    DisplacedEntity.Position = tracker.GetOrPrevious<Vector3>(nameof(Entity.Position), Time.Tick - 100);
-                    DisplacedEntity.Rotation = tracker.GetOrPrevious<Rotation>(nameof(Entity.Rotation), Time.Tick - 100);
                 }
                 else
                 {
                     DisplacedEntity.EnableDrawing = false;
-
                 }
 
 

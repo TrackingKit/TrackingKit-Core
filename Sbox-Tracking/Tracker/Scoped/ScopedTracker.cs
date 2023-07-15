@@ -21,7 +21,7 @@ namespace Tracking
             return query.Any();
         }
 
-        public bool ExistsOrPrevious(string propertyName, int tick)
+        public bool ExistsAtOrBefore(string propertyName, int tick)
         {
             var query = Data.Get(propertyName, Settings)
                 .Where(pair => pair.Key.Tick <= tick); // Tick or less value.
