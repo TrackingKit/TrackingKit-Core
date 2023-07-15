@@ -18,9 +18,28 @@ namespace Tracking
         public bool Exists(string propertyName)
         {
             var query = Data.Get(propertyName, Settings);
-
             return query.Any();
         }
+
+        public bool ExistsOrPrevious(string propertyName, int tick)
+        {
+            var query = Data.Get(propertyName, Settings)
+                .Where(pair => pair.Key.Tick <= tick); // Tick or less value.
+            return query.Any();
+        }
+
+        public bool ExistsInRange(string propertyName, int minTick, int maxTick)
+        {
+            var query = Data.Get(propertyName, Settings)
+                .Where(x => x.Key.Tick >= minTick && x.Key.Tick <= maxTick); // Within range.
+            return query.Any();
+        }
+
+
+
+
+
+
 
         public T Get<T>(string propertyName, int tick)
         {

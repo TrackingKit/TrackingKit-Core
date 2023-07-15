@@ -27,6 +27,10 @@ namespace Tracking
             return query.Any();
         }
 
+
+
+
+
         public T Get<T>(string propertyName)
         {
             var query = Data.Get(propertyName, Settings)
