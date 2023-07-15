@@ -15,6 +15,13 @@ namespace Tracking
             Settings = settings;
         }
 
+        public bool Exists(string propertyName)
+        {
+            var query = Data.Get(propertyName, Settings);
+
+            return query.Any();
+        }
+
         public T Get<T>(string propertyName, int tick)
         {
 
