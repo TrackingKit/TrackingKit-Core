@@ -40,6 +40,9 @@ namespace Sandbox.Components
 
         protected virtual void RecordHandle()
         {
+            if (Entity == null) // Safeguard as when object is deleted this can potenitally be called again.
+                return;
+
             // Entity Properties.
             Tracker?.Add(nameof(Entity.Position), Entity.Position);
             Tracker?.Add(nameof(Entity.Rotation), Entity.Rotation);

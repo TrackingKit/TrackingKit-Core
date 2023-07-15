@@ -11,6 +11,11 @@ namespace Sandbox.Components
     {
         [Net] protected Entity DisplacedEntity { get; set; }
 
+
+        protected bool HasAuthroity => (Game.IsServer && IsServerOnly) 
+            || (Game.IsServer && ShouldTransmit) 
+            || (Game.IsClient && IsClientOnly);
+
         protected Tracker Tracker => TrackerSystem.GetOrRegister(Entity);
 
         protected override void OnActivate()
@@ -49,8 +54,20 @@ namespace Sandbox.Components
             {
                 // Entity part
 
-                DisplacedEntity.Position = tracker.GetOrPreviousOrDefault<Vector3>(nameof(Entity.Position), Time.Tick - 100, Entity.Position);
-                DisplacedEntity.Rotation = tracker.GetOrPreviousOrDefault<Rotation>(nameof(Entity.Rotation), Time.Tick - 100, Entity.Rotation);
+                if ( tracker.Exists(nameof(Entity.Position) ) && tracker.Exists(nameof(Entity.Rotation) ) )
+                {
+                    DisplacedEntity.EnableDrawing = true;
+
+                    DisplacedEntity.Position = tracker.GetOrPrevious<Vector3>(nameof(Entity.Position), Time.Tick - 100);
+                    DisplacedEntity.Rotation = tracker.GetOrPrevious<Rotation>(nameof(Entity.Rotation), Time.Tick - 100);
+                }
+                else
+                {
+                    DisplacedEntity.EnableDrawing = false;
+                    Log.Info("hi");
+
+                }
+
 
 
 
@@ -66,7 +83,8 @@ namespace Sandbox.Components
 
         protected override void OnDeactivate()
         {
-            DisplacedEntity.Delete();
+            if(HasAuthroity)
+                DisplacedEntity?.Delete();
 
             base.OnDeactivate();
         }
