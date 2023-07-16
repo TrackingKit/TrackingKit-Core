@@ -53,7 +53,7 @@ namespace Sandbox.Components
             var previousTick = Time.Tick - 100;
 
 
-            using ( var tracker = Tracker.Scope(previousTick, Time.Tick) )
+            using ( var tracker = Tracker.ScopeByTicks(previousTick, Time.Tick) )
             {
                 // Entity part
 

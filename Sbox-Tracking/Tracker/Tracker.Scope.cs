@@ -24,64 +24,44 @@ namespace Tracking
 
         // TODO: Sort this all out.
 
-        public ScopedTickTracker Scope(int specificTick, params string[] idents)
+        public ScopedTickTracker ScopeByTick(int specificTick, params string[] tags)
         {
-            if (!CanScope(specificTick, specificTick, false, idents)) return null;
+            if (!CanScope(specificTick, specificTick, false, tags)) return null;
 
 
-            var scopeSettings = new ScopeSettings()
-            {
-                MinTick = specificTick,
-                MaxTick = specificTick,
-                Tags = idents
-            };
+            var scopeData = Data.GenerateScopeTicks(specificTick, specificTick, tags);
 
-            return new ScopedTickTracker(Data, scopeSettings);
+            return new ScopedTickTracker(scopeData);
         }
 
 
-        public ScopedTracker Scope(int minTick, int maxTick, params string[] idents)
+        public ScopedTicksTracker ScopeByTicks(int minTick, int maxTick, params string[] tags)
         {
-            if (!CanScope(minTick, maxTick, false, idents)) return null;
+            if (!CanScope(minTick, maxTick, false, tags)) return null;
 
-            // TOOD: If canscope an issue maybe swap I think.
-            var scopeSettings = new ScopeSettings()
-            {
-                MinTick = minTick,
-                MaxTick = maxTick,
-                Tags = idents
-            };
+            var scopeData = Data.GenerateScopeTicks(minTick, maxTick, tags);
 
-            return new ScopedTracker(Data, scopeSettings);
+            return new ScopedTicksTracker(scopeData);
         }
 
-        public ScopedTracker Scope(params string[] idents)
+        public ScopedTicksTracker ScopeByTicks(params string[] idents)
         {
             if (!CanScope(int.MinValue, int.MaxValue, false, idents)) return null;
 
 
-            var scopeSettings = new ScopeSettings()
-            {
-                MinTick = int.MinValue,
-                MaxTick = int.MaxValue,
-                Tags = idents,
-            };
+            var scopeData = Data.GenerateScopeTicks(int.MinValue, int.MaxValue, idents);
 
-            return new ScopedTracker(Data, scopeSettings);
+            return new ScopedTicksTracker(scopeData);
         }
 
-        public ScopedTracker Scope()
+        public ScopedTicksTracker ScopeByTicks()
         {
             if (!CanScope(int.MinValue, int.MaxValue, false)) return null;
 
 
-            var scopeSettings = new ScopeSettings()
-            {
-                MinTick = int.MinValue,
-                MaxTick = int.MaxValue,
-            };
+            var scopeData = Data.GenerateScopeTicks(int.MinValue, int.MaxValue);
 
-            return new ScopedTracker(Data, scopeSettings);
+            return new ScopedTicksTracker(scopeData);
         }
 
     }

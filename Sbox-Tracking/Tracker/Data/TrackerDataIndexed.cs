@@ -13,6 +13,15 @@ public class TaggedData
     }
 }
 
+public class TrackerQueryData
+{
+    public string PropertyName { get; set; }
+    public int Tick { get; set; }
+    public int Version { get; set; }
+    public TaggedData TaggedData { get; set; }
+}
+
+
 public class TrackerIndexedData
 {
     private readonly Dictionary<string, SortedDictionary<int, SortedDictionary<int, TaggedData>>> data = new();
@@ -29,6 +38,8 @@ public class TrackerIndexedData
 
     public int Count => data.Values.Sum(tickDict => tickDict.Values.Sum(versionDict => versionDict.Count));
 
+    // TODO: Organise to correct way.
+    // As it make sense to do tick first in here as tick is highest order.
     public void SetValue(string propertyName, int tick, int version, object value, string[] tags)
     {
         if (!data.ContainsKey(propertyName))
@@ -47,9 +58,43 @@ public class TrackerIndexedData
         versionDict[version] = new TaggedData(value, tags);
     }
 
-    public void Remove(string propertyName, int tick, int version)
+    public bool Exists(int tick)
     {
-        if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+        return data.Values.Any(tickDict => tickDict.ContainsKey(tick));
+    }
+
+    public bool Exists(int tick, string propertyName)
+    {
+        return data.TryGetValue(propertyName, out var tickDict) && tickDict.ContainsKey(tick);
+    }
+
+    public bool Exists(int tick, string propertyName, int version)
+    {
+        return data.TryGetValue(propertyName, out var tickDict)
+               && tickDict.TryGetValue(tick, out var versionDict)
+               && versionDict.ContainsKey(version);
+    }
+
+    public void Remove(int tick)
+    {
+        foreach (var tickDict in data.Values)
+        {
+            tickDict.Remove(tick);
+        }
+    }
+
+    public void Remove(int tick, string propertyName)
+    {
+        if (data.TryGetValue(propertyName, out var tickDict))
+        {
+            tickDict.Remove(tick);
+        }
+    }
+
+    public void Remove(int tick, string propertyName, int version)
+    {
+        if (data.TryGetValue(propertyName, out var tickDict)
+            && tickDict.TryGetValue(tick, out var versionDict))
         {
             versionDict.Remove(version);
 
@@ -65,10 +110,13 @@ public class TrackerIndexedData
         }
     }
 
-    public IEnumerable<(int tick, int version, TaggedData taggedData)> GetValuesForPropertyBetweenTicks(string propertyName, int minTick, int maxTick)
+    public IEnumerable<TrackerQueryData> GetValuesBetweenTicks(int minTick, int maxTick)
     {
-        if (data.TryGetValue(propertyName, out var tickDict))
+        foreach (var propertyPair in data)
         {
+            var propertyName = propertyPair.Key;
+            var tickDict = propertyPair.Value;
+
             var ticksInRange = tickDict.Keys.SkipWhile(t => t < minTick).TakeWhile(t => t <= maxTick);
 
             foreach (var tick in ticksInRange)
@@ -76,10 +124,44 @@ public class TrackerIndexedData
                 foreach (var version in tickDict[tick].Keys)
                 {
                     var taggedData = tickDict[tick][version];
-                    yield return (tick, version, taggedData);
+                    yield return new TrackerQueryData
+                    {
+                        PropertyName = propertyName,
+                        Tick = tick,
+                        Version = version,
+                        TaggedData = taggedData
+                    };
                 }
             }
         }
     }
+
+
+    public IEnumerable<TrackerQueryData> GetValuesAtTick(int tick)
+    {
+        foreach (var propertyPair in data)
+        {
+            var propertyName = propertyPair.Key;
+            var tickDict = propertyPair.Value;
+
+            if (tickDict.TryGetValue(tick, out var versionDict))
+            {
+                foreach (var version in versionDict.Keys)
+                {
+                    var taggedData = versionDict[version];
+                    yield return new TrackerQueryData
+                    {
+                        PropertyName = propertyName,
+                        Tick = tick,
+                        Version = version,
+                        TaggedData = taggedData
+                    };
+                }
+            }
+        }
+    }
+
+
+
 
 }

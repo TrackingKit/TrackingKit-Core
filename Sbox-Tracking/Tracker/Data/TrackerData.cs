@@ -20,17 +20,27 @@ namespace Tracking
 
         public void RemoveValue(string propertyName, int tick, int version)
         {
-            indexedData.Remove(propertyName, tick, version);
+            indexedData.Remove(tick, propertyName, version);
         }
 
-        public IEnumerable<(TrackerKey Key, object Value)> Get(string propertyName, ScopeSettings settings)
+        public IEnumerable<(TrackerKey Key, object Value)> GenerateScopeTicks(int minTick, int maxTick, params string[] tags)
         {
-            var dataInRange = indexedData.GetValuesForPropertyBetweenTicks(propertyName, settings.MinTick, settings.MaxTick);
+            var dataInRange = indexedData.GetValuesBetweenTicks(minTick, maxTick);
 
             return dataInRange
-                .Where(data => settings.Tags == null || settings.Tags.All(tag => data.taggedData.Tags.Contains(tag)))
-                .Select(data => (new TrackerKey { PropertyName = propertyName, Tick = data.tick, Version = data.version, Tags = data.taggedData.Tags }, data.taggedData.Data));
+                .Where(data => tags == null || tags.All(tag => data.TaggedData.Tags.Contains(tag)))
+                .Select(data => (
+                    new TrackerKey
+                    {
+                        PropertyName = data.PropertyName,
+                        Tick = data.Tick,
+                        Version = data.Version,
+                        Tags = data.TaggedData.Tags
+                    },
+                    data.TaggedData.Data
+                ));
         }
+
     }
 
 

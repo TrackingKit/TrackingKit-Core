@@ -7,22 +7,19 @@ using Tracking;
 
 namespace Tracking
 {
-    public partial class ScopedTickTracker : IDisposable
+    public sealed class ScopedTickTracker : IDisposable
     {
-        // Ref
-        private TrackerData Data { get; set; }
+        private IEnumerable<(TrackerKey Key, object Value)> Data { get; }
 
-        private ScopeSettings Settings { get; set; }
 
-        internal ScopedTickTracker(TrackerData data, ScopeSettings settings)
+        internal ScopedTickTracker(IEnumerable<(TrackerKey Key, object Value)> data)
         {
             Data = data;
-            Settings = settings;
         }
 
         public bool Exists(string propertyName)
         {
-            var query = Data.Get(propertyName, Settings);
+            var query = Data.Where(x => x.Key.PropertyName == propertyName);
 
             return query.Any();
         }
@@ -33,10 +30,9 @@ namespace Tracking
 
         public T Get<T>(string propertyName)
         {
-            var query = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
+            var query = Data.Where(x => x.Key.PropertyName == propertyName);
 
-            if( !query.Any() )
+            if ( !query.Any() )
             {
                 Log.Error("No values found of that type");
                 return default;
@@ -50,8 +46,8 @@ namespace Tracking
 
         public T GetOrDefault<T>(string propertyName, T defaultValue)
         {
-            var query = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
+            var query = Data.Where(x => x.Key.PropertyName == propertyName);
+
 
             if (!query.Any())
             {
@@ -66,8 +62,8 @@ namespace Tracking
 
         public IEnumerable<T> GetDetailed<T>(string propertyName)
         {
-            var query = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
+            var query = Data.Where(x => x.Key.PropertyName == propertyName);
+
 
 
 
@@ -76,8 +72,8 @@ namespace Tracking
 
         public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, IEnumerable<T> defaultValue)
         {
-            var query = Data.Get(propertyName, Settings)
-                .Where(pair => pair.Key.Tick == Settings.SpecificTick);
+            var query = Data.Where(x => x.Key.PropertyName == propertyName);
+
 
             if (!query.Any())
             {
@@ -89,9 +85,7 @@ namespace Tracking
 
         public void Dispose()
         {
-            // TODO: data cached in this?
-            Data = null;
-            Settings = null;
+            
         }
 
 

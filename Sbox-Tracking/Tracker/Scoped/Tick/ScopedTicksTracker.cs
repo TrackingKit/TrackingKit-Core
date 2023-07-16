@@ -4,34 +4,39 @@ using System.Linq;
 
 namespace Tracking
 {
-    public partial class ScopedTracker : IDisposable
+    public partial class ScopedTicksTracker : IDisposable
     {
-        private TrackerData Data { get; set; }
-        private ScopeSettings Settings { get; set; }
+        private IEnumerable<(TrackerKey Key, object Value)> Data { get; }
 
-        internal ScopedTracker(TrackerData data, ScopeSettings settings)
+
+        internal ScopedTicksTracker(IEnumerable<(TrackerKey Key, object Value)> data)
         {
             Data = data;
-            Settings = settings;
         }
 
         public bool Exists(string propertyName)
         {
-            var query = Data.Get(propertyName, Settings);
+            var query = Data.Where( x => x.Key.PropertyName == propertyName );
+
+
             return query.Any();
         }
 
         public bool ExistsAtOrBefore(string propertyName, int tick)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(pair => pair.Key.Tick <= tick); // Tick or less value.
+
             return query.Any();
         }
 
         public bool ExistsInRange(string propertyName, int minTick, int maxTick)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(x => x.Key.Tick >= minTick && x.Key.Tick <= maxTick); // Within range.
+
             return query.Any();
         }
 
@@ -44,7 +49,8 @@ namespace Tracking
         public T Get<T>(string propertyName, int tick)
         {
 
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(pair => pair.Key.Tick == tick); // Get in tick position.
 
             if (!query.Any())
@@ -61,7 +67,8 @@ namespace Tracking
 
         public T GetOrDefault<T>(string propertyName, int tick, T defaultValue)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+               .Where(x => x.Key.PropertyName == propertyName)
                .Where(pair => pair.Key.Tick == tick); // Get in tick position.
 
             if (!query.Any())
@@ -77,7 +84,8 @@ namespace Tracking
 
         public T GetOrPrevious<T>(string propertyName, int tick)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(pair => pair.Key.Tick <= tick); // Get below or equal to tick amount
             
             if (!query.Any())
@@ -97,7 +105,8 @@ namespace Tracking
 
         public T GetOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+               .Where(x => x.Key.PropertyName == propertyName)
                .Where(pair => pair.Key.Tick <= tick); // Get below or equal to tick amount
 
             if (!query.Any())
@@ -120,7 +129,8 @@ namespace Tracking
         // TODO: test.
         public IEnumerable<T> GetDetailed<T>(string propertyName, int tick)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(pair => pair.Key.Tick == tick);
 
             if(!query.Any())
@@ -145,7 +155,8 @@ namespace Tracking
         // TODO: test.
         public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(pair => pair.Key.Tick == tick);
 
             if (!query.Any())
@@ -165,7 +176,8 @@ namespace Tracking
         // TODO: Test.
         public IEnumerable<T> GetDetailedOrPrevious<T>(string propertyName, int tick)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(pair => pair.Key.Tick <= tick); // Tick or less value.
 
             if(!query.Any())
@@ -185,7 +197,8 @@ namespace Tracking
         // TODO: Test.
         public IEnumerable<T> GetDetailedOrPreviousOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
         {
-            var query = Data.Get(propertyName, Settings)
+            var query = Data
+                .Where(x => x.Key.PropertyName == propertyName)
                 .Where(pair => pair.Key.Tick <= tick); // Tick or less value.
 
             if (!query.Any())
@@ -205,8 +218,7 @@ namespace Tracking
 
         public void Dispose()
         {
-            Data = null;
-            Settings = null;
+            
         }
     }
 
