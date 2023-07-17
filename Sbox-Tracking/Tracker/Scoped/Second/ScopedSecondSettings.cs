@@ -22,7 +22,7 @@ namespace Tracking
             get
             {
                 if (!IsSpecificSecond)
-                    Log.Error("Not specific tick");
+                    Log.Error("Not specific second");
 
                 return MaxSecond;
             }
