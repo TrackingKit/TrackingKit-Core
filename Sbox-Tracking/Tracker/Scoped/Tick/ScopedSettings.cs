@@ -1,6 +1,6 @@
 ﻿namespace Tracking
 {
-    public partial class ScopedSettings
+    public partial class ScopedTickSettings
     {
         public int MinTick { get; }
 
@@ -22,7 +22,7 @@
             }
         }
 
-        public ScopedSettings(int minTick, int maxTick, params string[] tags)
+        public ScopedTickSettings(int minTick, int maxTick, params string[] tags)
         {
             MinTick = minTick;
             MaxTick = maxTick;

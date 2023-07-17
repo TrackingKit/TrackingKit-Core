@@ -7,9 +7,9 @@ namespace Tracking
     public partial class ScopedTicksTracker : IDisposable
     {
         private TrackerData Data { get; }
-        private ScopedSettings ScopedSettings { get; }
+        private ScopedTickSettings ScopedSettings { get; }
 
-        internal ScopedTicksTracker(TrackerData data, ScopedSettings scopedSettings)
+        internal ScopedTicksTracker(TrackerData data, ScopedTickSettings scopedSettings)
         {
             Data = data;
             ScopedSettings = scopedSettings;
@@ -60,6 +60,7 @@ namespace Tracking
             return (T)itemToSelect.Value;
         }
         #endregion
+
 
         #region Previous methods
         public T GetOrPrevious<T>(string propertyName, int tick)

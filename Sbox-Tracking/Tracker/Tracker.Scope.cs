@@ -24,6 +24,8 @@ namespace Tracking
 
         // TODO: Sort this all out.
 
+        #region Tick(s)
+
         public ScopedTickTracker ScopeByTick(int specificTick, params string[] tags)
         {
             if (!CanScope(specificTick, specificTick, false, tags)) return null;
@@ -39,7 +41,7 @@ namespace Tracking
             if (!CanScope(minTick, maxTick, false, tags)) return null;
 
 
-            ScopedSettings scopedSettings = new(minTick, maxTick, tags);
+            ScopedTickSettings scopedSettings = new(minTick, maxTick, tags);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
@@ -48,7 +50,7 @@ namespace Tracking
         {
             if (!CanScope(int.MinValue, int.MaxValue, false, tags)) return null;
 
-            ScopedSettings scopedSettings = new(int.MinValue, int.MaxValue, tags);
+            ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue, tags);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
@@ -58,10 +60,31 @@ namespace Tracking
             if (!CanScope(int.MinValue, int.MaxValue, false)) return null;
 
 
-            ScopedSettings scopedSettings = new(int.MinValue, int.MaxValue);
+            ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
+
+        #endregion
+
+
+        #region Second(s)
+
+        public ScopedSecondsTracker ScopeBySeconds()
+        {
+            ScopedSecondSettings scopedSettings = new(float.MinValue, float.MaxValue);
+
+            return new ScopedSecondsTracker(Data, scopedSettings);
+        }
+
+        public ScopedSecondsTracker ScopeBySeconds(int minSecond, int maxSecnod)
+        {
+            ScopedSecondSettings scopedSettings = new(minSecond, maxSecnod);
+
+            return new ScopedSecondsTracker(Data, scopedSettings);
+        }
+
+        #endregion
 
     }
 }

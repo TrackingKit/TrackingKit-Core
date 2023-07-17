@@ -11,9 +11,9 @@ namespace Tracking
     {
         private TrackerData Data { get; }
 
-        private ScopedSettings ScopedSettings { get; }
+        private ScopedTickSettings ScopedSettings { get; }
 
-        internal ScopedTickTracker(TrackerData data, ScopedSettings scopedSettings)
+        internal ScopedTickTracker(TrackerData data, ScopedTickSettings scopedSettings)
         {
             Data = data;
             ScopedSettings = scopedSettings;
