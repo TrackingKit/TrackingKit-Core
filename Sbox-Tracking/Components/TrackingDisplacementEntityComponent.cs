@@ -50,52 +50,48 @@ namespace Sandbox.Components
             if (Tracker == null)
                 return;
 
-            var previousTick = Time.Tick - 100;
+            var displacementTick = Time.Tick - 100;
 
-
-            using ( var tracker = Tracker.ScopeByTicks(previousTick, Time.Tick) )
+            using (var tracker = Tracker.ScopeByTicks(displacementTick, Time.Tick))
             {
-                // Entity part
+                Vector3 lastKnownPosition = DisplacedEntity.Position;
+                Rotation lastKnownRotation = DisplacedEntity.Rotation;
 
-                // So sometimes cuts out and not sure why.
-
-                if (tracker.ExistsAtOrBefore(nameof(Entity.Position), previousTick) &&
-                     tracker.ExistsAtOrBefore(nameof(Entity.Rotation), previousTick))
+                // Check if tracking data exists for both position and rotation at displacementTick
+                if (tracker.Exists(nameof(Entity.Position)) && tracker.Exists(nameof(Entity.Rotation)))
                 {
+                    // Get the position and rotation of the Entity at displacementTick
+                    var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTick, lastKnownPosition);
+                    var rotationOfTracker = tracker.GetOrNextOrDefault<Rotation>(nameof(Entity.Rotation), displacementTick, lastKnownRotation);
 
-                    DisplacedEntity.EnableDrawing = true;
-
-                    var positionOfTracked = tracker.GetOrPreviousOrDefault<Vector3>(nameof(Entity.Position), previousTick, Entity.Position);
-
-
-                    var rotationOfTracker = tracker.GetOrPreviousOrDefault<Rotation>(nameof(Entity.Rotation), previousTick, Entity.Rotation);
-
-                    // If not set we set else if done we will just hide again.
+                    // Apply the tracked position and rotation to the DisplacedEntity if they're not the same already
                     if (DisplacedEntity.Position != positionOfTracked || DisplacedEntity.Rotation != rotationOfTracker)
                     {
-
+                        DisplacedEntity.EnableDrawing = true;
                         DisplacedEntity.Position = positionOfTracked;
                         DisplacedEntity.Rotation = rotationOfTracker;
                     }
                     else
                     {
-                        DisplacedEntity.EnableDrawing = false;
+                        // Hide the DisplacedEntity if its position and rotation are the same as the Entity's ones
+                        if (DisplacedEntity.Position == Entity.Position && DisplacedEntity.Rotation == Entity.Rotation)
+                        {
+                            DisplacedEntity.EnableDrawing = false;
+                        }
                     }
-
                 }
-                
-
-
-
-
-                //Log.Info(item);
-
-                //Log.Info(tracker.Get<Vector3>(nameof(Entity.Position), Time.Tick - 100));
-
+                else
+                {
+                    // Keep the DisplacedEntity at its last displacement position and rotation if there's no tracking data
+                    DisplacedEntity.Position = lastKnownPosition;
+                    DisplacedEntity.Rotation = lastKnownRotation;
+                    DisplacedEntity.EnableDrawing = false;
+                }
             }
-
-
         }
+
+
+
 
 
         protected override void OnDeactivate()

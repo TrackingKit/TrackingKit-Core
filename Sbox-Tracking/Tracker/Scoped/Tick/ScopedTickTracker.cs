@@ -9,30 +9,28 @@ namespace Tracking
 {
     public sealed class ScopedTickTracker : IDisposable
     {
-        private IEnumerable<(TrackerKey Key, object Value)> Data { get; }
+        private TrackerData Data { get; }
 
+        private ScopedSettings ScopedSettings { get; }
 
-        internal ScopedTickTracker(IEnumerable<(TrackerKey Key, object Value)> data)
+        internal ScopedTickTracker(TrackerData data, ScopedSettings scopedSettings)
         {
             Data = data;
+            ScopedSettings = scopedSettings;
         }
 
         public bool Exists(string propertyName)
         {
-            var query = Data.Where(x => x.Key.PropertyName == propertyName);
+            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
 
             return query.Any();
         }
 
-
-
-
-
         public T Get<T>(string propertyName)
         {
-            var query = Data.Where(x => x.Key.PropertyName == propertyName);
+            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
 
-            if ( !query.Any() )
+            if (!query.Any())
             {
                 Log.Error("No values found of that type");
                 return default;
@@ -46,8 +44,7 @@ namespace Tracking
 
         public T GetOrDefault<T>(string propertyName, T defaultValue)
         {
-            var query = Data.Where(x => x.Key.PropertyName == propertyName);
-
+            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
 
             if (!query.Any())
             {
@@ -62,18 +59,14 @@ namespace Tracking
 
         public IEnumerable<T> GetDetailed<T>(string propertyName)
         {
-            var query = Data.Where(x => x.Key.PropertyName == propertyName);
-
-
-
+            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
 
             return query.Select(pair => (T)pair.Value);
         }
 
         public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, IEnumerable<T> defaultValue)
         {
-            var query = Data.Where(x => x.Key.PropertyName == propertyName);
-
+            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick));
 
             if (!query.Any())
             {
@@ -85,13 +78,7 @@ namespace Tracking
 
         public void Dispose()
         {
-            
+
         }
-
-
-
     }
-
-
-
 }

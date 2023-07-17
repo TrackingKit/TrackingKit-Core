@@ -29,9 +29,8 @@ namespace Tracking
             if (!CanScope(specificTick, specificTick, false, tags)) return null;
 
 
-            var scopeData = Data.GenerateScopeTicks(specificTick, specificTick, tags);
-
-            return new ScopedTickTracker(scopeData);
+            return default;
+            //return new ScopedTickTracker(Data);
         }
 
 
@@ -39,19 +38,19 @@ namespace Tracking
         {
             if (!CanScope(minTick, maxTick, false, tags)) return null;
 
-            var scopeData = Data.GenerateScopeTicks(minTick, maxTick, tags);
 
-            return new ScopedTicksTracker(scopeData);
+            ScopedSettings scopedSettings = new(minTick, maxTick, tags);
+
+            return new ScopedTicksTracker(Data, scopedSettings);
         }
 
-        public ScopedTicksTracker ScopeByTicks(params string[] idents)
+        public ScopedTicksTracker ScopeByTicks(params string[] tags)
         {
-            if (!CanScope(int.MinValue, int.MaxValue, false, idents)) return null;
+            if (!CanScope(int.MinValue, int.MaxValue, false, tags)) return null;
 
+            ScopedSettings scopedSettings = new(int.MinValue, int.MaxValue, tags);
 
-            var scopeData = Data.GenerateScopeTicks(int.MinValue, int.MaxValue, idents);
-
-            return new ScopedTicksTracker(scopeData);
+            return new ScopedTicksTracker(Data, scopedSettings);
         }
 
         public ScopedTicksTracker ScopeByTicks()
@@ -59,9 +58,9 @@ namespace Tracking
             if (!CanScope(int.MinValue, int.MaxValue, false)) return null;
 
 
-            var scopeData = Data.GenerateScopeTicks(int.MinValue, int.MaxValue);
+            ScopedSettings scopedSettings = new(int.MinValue, int.MaxValue);
 
-            return new ScopedTicksTracker(scopeData);
+            return new ScopedTicksTracker(Data, scopedSettings);
         }
 
     }

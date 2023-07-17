@@ -23,12 +23,26 @@ namespace Tracking
             indexedData.Remove(tick, propertyName, version);
         }
 
-        public IEnumerable<(TrackerKey Key, object Value)> GenerateScopeTicks(int minTick, int maxTick, params string[] tags)
+        public IEnumerable<(TrackerKey Key, object Value)> Query(
+            string propertyName = null,
+            (int minTick, int maxTick)? tickRange = null,
+            params string[] tags)
         {
-            var dataInRange = indexedData.GetValuesBetweenTicks(minTick, maxTick);
+            var dataInRange = tickRange.HasValue
+                ? indexedData.GetValuesBetweenTicks(tickRange.Value.minTick, tickRange.Value.maxTick)
+                : indexedData.GetValuesBetweenTicks(int.MinValue, int.MaxValue);
+
+            if (!string.IsNullOrEmpty(propertyName))
+            {
+                dataInRange = dataInRange.Where(data => data.PropertyName == propertyName);
+            }
+
+            if (tags != null && tags.Length > 0)
+            {
+                dataInRange = dataInRange.Where(data => tags.All(tag => data.TaggedData.Tags.Contains(tag)));
+            }
 
             return dataInRange
-                .Where(data => tags == null || tags.All(tag => data.TaggedData.Tags.Contains(tag)))
                 .Select(data => (
                     new TrackerKey
                     {
@@ -40,6 +54,29 @@ namespace Tracking
                     data.TaggedData.Data
                 ));
         }
+
+        public int QueryCount(
+            string propertyName = null,
+            (int minTick, int maxTick)? tickRange = null,
+            params string[] tags)
+        {
+            var dataInRange = tickRange.HasValue
+                ? indexedData.GetValuesBetweenTicks(tickRange.Value.minTick, tickRange.Value.maxTick)
+                : indexedData.GetValuesBetweenTicks(int.MinValue, int.MaxValue);
+
+            if (!string.IsNullOrEmpty(propertyName))
+            {
+                dataInRange = dataInRange.Where(data => data.PropertyName == propertyName);
+            }
+
+            if (tags != null && tags.Length > 0)
+            {
+                dataInRange = dataInRange.Where(data => tags.All(tag => data.TaggedData.Tags.Contains(tag)));
+            }
+
+            return dataInRange.Count();
+        }
+
 
     }
 
