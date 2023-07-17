@@ -9,16 +9,9 @@ namespace Tracking
         public string PropertyName { get; init; }
 
 
-        public TrackerKey()
-        {
-            TimeSince = 0;
-
-        }
 
         /// <summary> Current Tick this was recorded. </summary>
         public int Tick { get; init; }
-
-        public TimeSince TimeSince { get; }
 
         /// <summary> Current Version logged at this tick. </summary>
         public int Version { get; init; }

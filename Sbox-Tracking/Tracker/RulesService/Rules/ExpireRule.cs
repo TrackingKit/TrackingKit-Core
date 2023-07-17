@@ -18,8 +18,7 @@ namespace Tracking.Rules
         public override bool? ShouldDelete(TrackerKey key, object obj)
         {
 
-            if(key.TimeSince > Seconds)
-                return true;
+            
 
 
             return base.ShouldDelete(key, obj);
