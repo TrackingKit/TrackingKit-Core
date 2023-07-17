@@ -79,7 +79,7 @@ namespace Tracking
             return new ScopedSecondsTracker(Data, scopedSettings);
         }
 
-        public ScopedSecondsTracker ScopeBySeconds(int minSecond, int maxSecond, params string[] tags)
+        public ScopedSecondsTracker ScopeBySeconds(float minSecond, float maxSecond, params string[] tags)
         {
             ScopedSecondSettings scopedSettings = new(minSecond, maxSecond, tags);
 
