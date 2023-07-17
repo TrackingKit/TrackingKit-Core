@@ -57,8 +57,7 @@ namespace Sandbox.Components
             {
                 // Entity part
 
-
-
+                // So sometimes cuts out and not sure why.
 
                 if (tracker.ExistsAtOrBefore(nameof(Entity.Position), previousTick) &&
                      tracker.ExistsAtOrBefore(nameof(Entity.Rotation), previousTick))
@@ -66,9 +65,10 @@ namespace Sandbox.Components
 
                     DisplacedEntity.EnableDrawing = true;
 
-                    var positionOfTracked = tracker.GetOrPrevious<Vector3>(nameof(Entity.Position), previousTick);
+                    var positionOfTracked = tracker.GetOrPreviousOrDefault<Vector3>(nameof(Entity.Position), previousTick, Entity.Position);
 
-                    var rotationOfTracker = tracker.GetOrPrevious<Rotation>(nameof(Entity.Rotation), previousTick);
+
+                    var rotationOfTracker = tracker.GetOrPreviousOrDefault<Rotation>(nameof(Entity.Rotation), previousTick, Entity.Rotation);
 
                     // If not set we set else if done we will just hide again.
                     if (DisplacedEntity.Position != positionOfTracked || DisplacedEntity.Rotation != rotationOfTracker)
@@ -83,11 +83,7 @@ namespace Sandbox.Components
                     }
 
                 }
-                else
-                {
-
-                    DisplacedEntity.EnableDrawing = false;
-                }
+                
 
 
 
