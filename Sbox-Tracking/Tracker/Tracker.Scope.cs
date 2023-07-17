@@ -46,6 +46,7 @@ namespace Tracking
             return new ScopedTicksTracker(Data, scopedSettings);
         }
 
+
         public ScopedTicksTracker ScopeByTicks(params string[] tags)
         {
             if (!CanScope(int.MinValue, int.MaxValue, false, tags)) return null;
@@ -55,6 +56,7 @@ namespace Tracking
             return new ScopedTicksTracker(Data, scopedSettings);
         }
 
+        // TODO: is this needed if params function above does same?
         public ScopedTicksTracker ScopeByTicks()
         {
             if (!CanScope(int.MinValue, int.MaxValue, false)) return null;
@@ -70,19 +72,22 @@ namespace Tracking
 
         #region Second(s)
 
-        public ScopedSecondsTracker ScopeBySeconds()
+        public ScopedSecondsTracker ScopeBySeconds(params string[] tags)
         {
-            ScopedSecondSettings scopedSettings = new(float.MinValue, float.MaxValue);
+            ScopedSecondSettings scopedSettings = new(float.MinValue, float.MaxValue, tags);
 
             return new ScopedSecondsTracker(Data, scopedSettings);
         }
 
-        public ScopedSecondsTracker ScopeBySeconds(int minSecond, int maxSecnod)
+        public ScopedSecondsTracker ScopeBySeconds(int minSecond, int maxSecond, params string[] tags)
         {
-            ScopedSecondSettings scopedSettings = new(minSecond, maxSecnod);
+            ScopedSecondSettings scopedSettings = new(minSecond, maxSecond, tags);
 
             return new ScopedSecondsTracker(Data, scopedSettings);
         }
+
+
+
 
         #endregion
 
