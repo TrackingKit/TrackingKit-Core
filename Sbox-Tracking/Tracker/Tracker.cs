@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,6 @@ using Tracking.RulesService;
 
 namespace Tracking
 {
-
     public partial class Tracker
     {
         protected TrackerData Data { get; } = new();
@@ -32,6 +32,7 @@ namespace Tracking
         /// <summary> Rules for Adding and Deleteing data. </summary>
         public TrackerRulesService Rules { get; } 
 
+        public bool Pause { get; set; }
 
 
         // Building
@@ -67,33 +68,31 @@ namespace Tracking
             if (Time.Tick % Game.TickRate == 0)
             {
                 // TODO: Rule Expire is expensive I think.
-                HandleDelete();
+                _ = HandleDelete();
             }
-
-
-            // TODO: duplicate rule
         }
 
-        protected void HandleDelete()
+        // TODO: Double check all this logic is fine.
+        protected async Task HandleDelete()
         {
-            /*
-            List<TrackerKey> keysToCleanUp = new();
+            ConcurrentBag<TrackerKey> keysToCleanUp = new();
 
-            foreach(var value in Data.GetValues())
-            {
-                var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value));
+            // Use Task.WhenAll to await multiple tasks at once
+            await GameTask.WhenAll(Data.Query().Select(value =>
+                GameTask.RunInThreadAsync(() =>
+                {
+                    var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value));
+                    if (result.HasValue && result.Value == true)
+                        keysToCleanUp.Add(value.Key);
+                })));
 
-                if(result.HasValue && result.Value == true)
-                    keysToCleanUp.Add(value.Key);
-            }
 
-            //Log.Info($"Deleting: {keysToCleanUp.Count}");
 
-            foreach(var key in keysToCleanUp)
-                Data.RemoveValue(key);
-
-            */
+            // I aint sure if thread safe. So just doing safe for now.
+            foreach (var key in keysToCleanUp)
+                Data.RemoveValue(key.PropertyName, key.Tick, key.Version);
         }
+
 
 
 
@@ -106,6 +105,9 @@ namespace Tracking
         /// <param name="idents">The identifiers for the property.</param>
         public void Add(string propertyName, object value, int tick, params string[] idents)
         {
+            if (Pause)
+                return;
+
             // Getting the latest version recorded for the specified property at a given tick
             int latestRecordedVersion = Data.GetLatestVersion(propertyName, tick);
 
