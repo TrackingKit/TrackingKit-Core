@@ -44,13 +44,19 @@ namespace Sandbox.Components
         }
 
 
+        public int DisplacementSeconds { get; set; } = 2;
+
+
         [GameEvent.Tick.Server]
         public void Tick()
         {
             if (Tracker == null)
                 return;
 
-            var displacementTime = Time.Now - 5;
+            var displacementTime = Time.Now - DisplacementSeconds;
+
+            // TODO: This logic just feels wrong and we should be doing something like "Second" here idk tho.
+
 
             using (var tracker = Tracker.ScopeBySeconds(displacementTime, Time.Now))
             {
