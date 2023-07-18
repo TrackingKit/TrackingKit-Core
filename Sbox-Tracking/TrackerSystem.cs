@@ -98,5 +98,26 @@ namespace Tracking
         }
 
         public static void Clear() => Values.Clear();
+
+        internal static IEnumerable<(object key, Tracker obj)> GetAll()
+        {
+            // Create a list to store the results
+            var results = new List<(object key, Tracker obj)>();
+
+            // Loop over the dictionary
+            foreach (var pair in Values)
+            {
+                // If the weak reference is still alive (i.e., the target object hasn't been garbage collected), 
+                // add the target object and associated tracker to the results
+                if (pair.Key.TryGetTarget(out var target))
+                {
+                    results.Add((target, pair.Value));
+                }
+            }
+
+            // Return the results
+            return results;
+        }
+
     }
 }
