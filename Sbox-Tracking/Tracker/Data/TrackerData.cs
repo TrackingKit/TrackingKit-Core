@@ -60,21 +60,23 @@ namespace Tracking
             (int minTick, int maxTick)? tickRange = null,
             params string[] tags)
         {
-            var dataInRange = tickRange.HasValue
-                ? indexedData.GetValuesBetweenTicks(tickRange.Value.minTick, tickRange.Value.maxTick)
-                : indexedData.GetValuesBetweenTicks(int.MinValue, int.MaxValue);
-
-            if (!string.IsNullOrEmpty(propertyName))
+            int count = 0;
+            foreach (var item in indexedData.GetValuesBetweenTicks(tickRange?.minTick ?? int.MinValue, tickRange?.maxTick ?? int.MaxValue))
             {
-                dataInRange = dataInRange.Where(data => data.PropertyName == propertyName);
+                if (propertyName != null && item.PropertyName != propertyName)
+                {
+                    continue;
+                }
+
+                if (tags.Length > 0 && !tags.All(tag => item.TaggedData.Tags.Contains(tag)))
+                {
+                    continue;
+                }
+
+                count++;
             }
 
-            if (tags != null && tags.Length > 0)
-            {
-                dataInRange = dataInRange.Where(data => tags.All(tag => data.TaggedData.Tags.Contains(tag)));
-            }
-
-            return dataInRange.Count();
+            return count;
         }
 
 
