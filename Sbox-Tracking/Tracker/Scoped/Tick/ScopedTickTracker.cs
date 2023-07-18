@@ -19,6 +19,18 @@ namespace Tracking
             ScopedSettings = scopedSettings;
         }
 
+
+        public int Count()
+            => Data.QueryCount(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick));
+
+        public IEnumerable<string> GetDistinctKeys()
+        {
+            return Data
+                .Query(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick))
+                .Select(item => item.Key.PropertyName)
+                .Distinct();
+        }
+
         public bool Exists(string propertyName)
         {
             var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);

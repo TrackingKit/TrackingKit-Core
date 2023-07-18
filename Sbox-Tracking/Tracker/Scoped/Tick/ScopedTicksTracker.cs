@@ -15,8 +15,18 @@ namespace Tracking
             ScopedSettings = scopedSettings;
         }
 
-        #region Count and Exists methods
-        public int Count() => Data.QueryCount(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick));
+        #region Count, DistinctKeys and Exists methods
+        public int Count() 
+            => Data.QueryCount(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick));
+
+        public IEnumerable<string> GetDistinctKeys()
+        {
+            return Data
+                .Query(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick))
+                .Select(item => item.Key.PropertyName)
+                .Distinct();
+        }
+
 
         public bool Exists(string propertyName)
         {
