@@ -24,6 +24,7 @@ namespace Tracking
             // TODO: Remove from here.
             Rules.Register<AllowRule>();
             Rules.Register<DuplicateRule>();
+            Rules.Register<ExpireRule>();
 
         }
 
@@ -68,29 +69,45 @@ namespace Tracking
             if (Time.Tick % Game.TickRate == 0)
             {
                 // TODO: Rule Expire is expensive I think.
-                _ = HandleDelete();
+                HandleDelete();
             }
         }
 
         // TODO: Double check all this logic is fine.
-        protected async Task HandleDelete()
+        protected void HandleDelete()
         {
             ConcurrentBag<TrackerKey> keysToCleanUp = new();
 
+
+            /*
             // Use Task.WhenAll to await multiple tasks at once
             await GameTask.WhenAll(Data.Query().Select(value =>
                 GameTask.RunInThreadAsync(() =>
                 {
-                    var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value));
+
+                    var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value) );
+
+                    Log.Info(result);
+
                     if (result.HasValue && result.Value == true)
                         keysToCleanUp.Add(value.Key);
                 })));
+            */
 
+            /*
+            foreach (var value in Data.Query())
+            {
 
+                var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value));
+
+                if (result.HasValue && result.Value == true)
+                    keysToCleanUp.Add(value.Key);
+            }
 
             // I aint sure if thread safe. So just doing safe for now.
             foreach (var key in keysToCleanUp)
                 Data.RemoveValue(key.PropertyName, key.Tick, key.Version);
+            */
         }
 
 
@@ -108,14 +125,17 @@ namespace Tracking
             if (Pause)
                 return;
 
-            // Getting the latest version recorded for the specified property at a given tick
-            int latestRecordedVersion = Data.GetLatestVersion(propertyName, tick);
 
-            // Creating a new version by incrementing the latest recorded version
-            var newVersion = latestRecordedVersion + 1;
+            var latestValueDataFound = Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> valueFound );
+
+            // Getting the latest version recorded for the specified property at a given tick
+            int nextVersion = latestValueDataFound ? valueFound.Key.Version + 1 : 1;
+
 
             // Merging identifiers from the current scope with the identifiers passed as parameters
             var tags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray();
+
+            // TODO: Key should come back for circuit.
 
             // Checking rules to see if the property can be added
             var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldAdd(propertyName, value));
@@ -125,7 +145,7 @@ namespace Tracking
                 return;
 
             // Adding the value with the given property name, tick, new version, value, and tags
-            Data.AddValue(propertyName, tick, newVersion, value, tags);
+            Data.SetValue(propertyName, tick, nextVersion, value, tags);
         }
 
         public void Add(string propertyName, object value, params string[] idents)
@@ -134,13 +154,15 @@ namespace Tracking
         [Obsolete("Needs implementing")]
         public void Remove(string propertyName, int tick)
         {
-            
+            // Will remove all versions on that one.
         }
 
 
         [Obsolete("Needs implementing")]
-        public void RemoveAllVersions(string propertyName, int tick, int version)
+        public void RemovSpecificVersion(string propertyName, int tick, int version)
         {
+            // Remove speicifc version.
+
 
             //Data.RemoveValue(trackerKey);
         }

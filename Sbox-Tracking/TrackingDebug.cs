@@ -42,6 +42,8 @@ namespace Tracking
         [GameEvent.Tick.Server]
         private static void Tick()
         {
+
+
             int currentLine = 0;
 
 
@@ -74,7 +76,7 @@ namespace Tracking
                 {
                     currentLine++;
 
-                    DebugOverlay.ScreenText($"Total Values: {scope.Count()}", currentLine);
+                    //DebugOverlay.ScreenText($"Total Values: {scope.Count()}", currentLine);
 
                     foreach(var key in scope.GetDistinctKeys())
                     {

@@ -21,23 +21,15 @@ namespace Tracking
 
 
         public int Count()
-            => Data.QueryCount(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick));
+            => Data.Count;
 
         public IEnumerable<string> GetDistinctKeys()
-        {
-            return Data
-                .Query(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick))
-                .Select(item => item.Key.PropertyName)
-                .Distinct();
-        }
+            => Data.DistinctKeys;
 
         public bool Exists(string propertyName)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
-
-            return query.Any();
-        }
-
+            => Data.DistinctKeys.Contains(propertyName);
+        
+        /*
         public T Get<T>(string propertyName)
         {
             var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
@@ -87,6 +79,8 @@ namespace Tracking
 
             return query.Select(pair => (T)pair.Value);
         }
+
+        */
 
         public void Dispose()
         {

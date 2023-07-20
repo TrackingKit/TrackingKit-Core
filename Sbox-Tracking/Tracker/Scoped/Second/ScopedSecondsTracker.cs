@@ -18,23 +18,16 @@ namespace Tracking
 
 
         public int Count()
-            => Data.QueryCount(tickRange: (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(ScopedSettings.MaxSecond)));
+            => Data.Count;
 
 
-        public IEnumerable<string> GetDistinctKeys()
-        {
-            return Data
-                .Query(tickRange: (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(ScopedSettings.MaxSecond)))
-                .Select(item => item.Key.PropertyName)
-                .Distinct();
-        }
+        public IEnumerable<string> GetDistinctKeys
+            => Data.DistinctKeys;
 
         public bool Exists(string propertyName)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(ScopedSettings.MaxSecond)), ScopedSettings.Tags);
-            return query.Any();
-        }
+            => Data.DistinctKeys.Contains(propertyName);
 
+        /*
         public bool ExistsAtOrBefore(string propertyName, float second)
         {
             var query = Data.Query(propertyName, (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
@@ -200,6 +193,7 @@ namespace Tracking
             var itemsToSelect = query.Select(x => x.Value);
             return (IEnumerable<T>)itemsToSelect;
         }
+        */
 
         public void Dispose()
         {

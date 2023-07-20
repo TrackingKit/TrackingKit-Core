@@ -15,177 +15,236 @@ namespace Tracking
             ScopedSettings = scopedSettings;
         }
 
+        private void ClampAndWarn(ref int tick)
+        {
+            if (tick < ScopedSettings.MinTick)
+            {
+                Log.Warning($"Tick {tick} is less than ScopedSettings.MinTick. Clamping to ScopedSettings.MinTick.");
+                tick = ScopedSettings.MinTick;
+            }
+            else if (tick > ScopedSettings.MaxTick)
+            {
+                Log.Warning($"Tick {tick} is greater than ScopedSettings.MaxTick. Clamping to ScopedSettings.MaxTick.");
+                tick = ScopedSettings.MaxTick;
+            }
+        }
+
         #region Count, DistinctKeys and Exists methods
-        public int Count() 
-            => Data.QueryCount(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick));
 
+        //[Obsolete("This doesnt consider scope.")]
+        //public int Count() 
+       //    => Data.Count;
+
+
+        [Obsolete("This doesnt consider scope.")]
         public IEnumerable<string> GetDistinctKeys()
-        {
-            return Data
-                .Query(tickRange: (ScopedSettings.MinTick, ScopedSettings.MaxTick))
-                .Select(item => item.Key.PropertyName)
-                .Distinct();
-        }
+            => Data.DistinctKeys;
 
+        // and tags?
 
+        // TODO Log.Error scoping out of bounds 
         public bool Exists(string propertyName)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
-            return query.Any();
-        }
+            => Data.Exists(propertyName, ScopedSettings.MinTick, ScopedSettings.MaxTick, ScopedSettings.Tags);
+
+
+
 
         public bool ExistsAtOrBefore(string propertyName, int tick)
         {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, tick), ScopedSettings.Tags);
-            return query.Any();
+            ClampAndWarn(ref tick);
+
+            // TODO: Exists
+            return Data.Exists(propertyName, ScopedSettings.MinTick, tick, ScopedSettings.Tags);
         }
 
-        public bool ExistsInRange(string propertyName, int minTick, int maxTick)
+        public bool ExistsAtOrAfter(string propertyName, int tick)
         {
-            var query = Data.Query(propertyName, (minTick, maxTick), ScopedSettings.Tags);
-            return query.Any();
+            ClampAndWarn(ref tick);
+
+            return Data.Exists(propertyName, tick, ScopedSettings.MaxTick, ScopedSettings.Tags);
         }
+
+        public bool ExistsAt(string propertyName, int tick)
+        {
+            ClampAndWarn(ref tick);
+
+            return Data.Exists(propertyName, tick, tick, ScopedSettings.Tags);
+        }
+
+
         #endregion
 
         #region Get methods
-        public T Get<T>(string propertyName, int tick)
-        {
-            var query = Data.Query(propertyName, (tick, tick), ScopedSettings.Tags);
-            if (!query.Any())
-            {
-                Log.Error($"No valid found for {propertyName}, {tick}");
-                return default;
-            }
 
-            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
-            return (T)itemToSelect.Value;
+        private T GetInternal<T>(string propertyName, int tick, bool logError, T defaultValue = default)
+        {
+            ClampAndWarn(ref tick);
+
+            if (Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> value, ScopedSettings.Tags))
+                return (T)value.Value;
+
+            if (logError)
+                Log.Error($"No valid found for {propertyName}, {tick}");
+
+            return defaultValue;
         }
+
+        public T Get<T>(string propertyName, int tick)
+            => GetInternal<T>(propertyName, tick, logError: true);
 
         public T GetOrDefault<T>(string propertyName, int tick, T defaultValue)
-        {
-            var query = Data.Query(propertyName, (tick, tick), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
+            => GetInternal<T>(propertyName, tick, logError: false, defaultValue);
 
-            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
-            return (T)itemToSelect.Value;
-        }
+
         #endregion
 
+        #region GetOrPrevious methods
 
-        #region Previous methods
-        public T GetOrPrevious<T>(string propertyName, int tick)
+        private T GetOrPreviousInternal<T>(string propertyName, int tick, bool logError, T defaultValue = default)
         {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, tick), ScopedSettings.Tags);
-            if (!query.Any())
+            ClampAndWarn(ref tick);
+
+            // Try to get the value at the given tick
+            bool found = Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> value, ScopedSettings.Tags);
+
+            // If no value was found at the given tick, try to get the latest value before that tick
+            if (!found)
             {
-                Log.Error("No values found of that type");
-                return default;
+                found = Data.TryGetLatestValueAtPreviousAvailableTick(propertyName, tick, out value, tags: ScopedSettings.Tags, stopIfTick: ScopedSettings.MinTick );
+
+                // If no value was found even at the previous ticks, log an error and return default value
+                if (!found)
+                {
+                    if (logError)
+                    {
+                        Log.Error($"No valid value found for {propertyName}, {tick} at previous ticks");
+                    }
+
+                    return defaultValue;
+                }
             }
 
-            query = query.OrderByDescending(pair => pair.Key.Tick)
-                .ThenByDescending(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
+            return (T)value.Value;
         }
+
+        public T GetOrPrevious<T>(string propertyName, int tick)
+            => GetOrPreviousInternal<T>(propertyName, tick, true);
 
         public T GetOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, tick), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
+            => GetOrPreviousInternal<T>(propertyName, tick, false, defaultValue);
 
-            query = query.OrderByDescending(pair => pair.Key.Tick)
-                .ThenByDescending(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
-        }
         #endregion
 
-        #region Detailed previous methods
-        public IEnumerable<T> GetDetailed<T>(string propertyName, int tick)
+        #region GetOrNext methods
+
+        private T GetOrNextInternal<T>(string propertyName, int tick, bool logError, T defaultValue = default)
         {
-            var query = Data.Query(propertyName, (tick, tick), ScopedSettings.Tags);
-            if (!query.Any())
+            ClampAndWarn(ref tick);
+
+            // First try to get the value at the given tick
+            bool found = Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> value, ScopedSettings.Tags);
+
+            // If no value was found at the given tick, try to get the latest value after that tick
+            if (!found)
             {
-                Log.Error("Failed to find any values");
-                return default;
+                found = Data.TryGetLatestValueAtNextAvailableTick(propertyName, tick, out value, tags: ScopedSettings.Tags, stopIfTick: ScopedSettings.MaxTick);
             }
 
-            query = query.OrderByDescending(x => x.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
+            // If no value was found after the given tick, return the default value
+            if (!found)
+            {
+                if (logError)
+                {
+                    Log.Error($"No valid value found for {propertyName}, {tick}");
+                }
+
+                return defaultValue;
+            }
+
+            return (T)value.Value;
         }
 
-        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
-        {
-            var query = Data.Query(propertyName, (tick, tick), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
+        public T GetOrNext<T>(string propertyName, int tick)
+            => GetOrNextInternal<T>(propertyName, tick, logError: true);
 
-            query = query.OrderByDescending(x => x.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
+        public T GetOrNextOrDefault<T>(string propertyName, int tick, T defaultValue)
+            => GetOrNextInternal<T>(propertyName, tick, logError: false, defaultValue);
+
+        #endregion
+
+
+        #region GetDetailed methods
+
+        private IEnumerable<T> GetDetailedInternal<T>(string propertyName, int tick, bool logError, IEnumerable<T> defaultValue = default)
+        {
+            ClampAndWarn(ref tick);
+
+            bool found = Data.TryGetDetailedValue(propertyName, tick, out IEnumerable<KeyValuePair<TrackerKey, object>> value, ScopedSettings.Tags);
+
+            if (!found)
+            {
+                if (logError)
+                {
+                    Log.Error($"Failed to find any values for {propertyName}, {tick}");
+                }
+
+                return defaultValue;
+            }
+
+            return value.Select(x => (T)x.Value);
+        }
+
+        public IEnumerable<T> GetDetailed<T>(string propertyName, int tick)
+            => GetDetailedInternal<T>(propertyName, tick, logError: true);
+
+        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
+            => GetDetailedInternal<T>(propertyName, tick, logError: false, defaultValue);
+
+        #endregion
+
+        #region GetDetailedOrPrevious methods
+
+        private IEnumerable<T> GetDetailedOrPreviousInternal<T>(string propertyName, int tick, bool logError, IEnumerable<T> defaultValue = default)
+        {
+            ClampAndWarn(ref tick);
+
+            // First try to get the detailed value at the given tick
+            bool found = Data.TryGetDetailedValue(propertyName, tick, out IEnumerable<KeyValuePair<TrackerKey, object>> values, ScopedSettings.Tags);
+
+            // If no value was found at the given tick, try to get the detailed value before that tick
+            if (!found)
+            {
+                found = Data.TryGetDetailedValuesAtPreviousAvailableTick(propertyName, tick, out values, tags: ScopedSettings.Tags, stopIfTick: ScopedSettings.MinTick);
+            }
+
+            // If no value was found before the given tick, return the default value
+            if (!found)
+            {
+                if (logError)
+                {
+                    Log.Error($"No valid values found for {propertyName}, {tick}");
+                }
+
+                return defaultValue;
+            }
+
+            return values.Select(kv => (T)kv.Value);
         }
 
         public IEnumerable<T> GetDetailedOrPrevious<T>(string propertyName, int tick)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, tick), ScopedSettings.Tags);
-            if (!query.Any())
-            {
-                Log.Error("No values found");
-                return default;
-            }
-
-            query = query.OrderByDescending(pair => pair.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
-        }
+            => GetDetailedOrPreviousInternal<T>(propertyName, tick, logError: true);
 
         public IEnumerable<T> GetDetailedOrPreviousOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, tick), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
+            => GetDetailedOrPreviousInternal<T>(propertyName, tick, logError: false, defaultValue);
 
-            query = query.OrderByDescending(pair => pair.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
-        }
         #endregion
 
+        #region GetDetailedOrNext methods
 
-        #region Next methods
-        public T GetOrNext<T>(string propertyName, int tick)
-        {
-            var query = Data.Query(propertyName, (tick, ScopedSettings.MaxTick), ScopedSettings.Tags);
-            if (!query.Any())
-            {
-                Log.Error("No values found of that type");
-                return default;
-            }
-
-            query = query.OrderBy(pair => pair.Key.Tick)
-                .ThenBy(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
-        }
-
-        public T GetOrNextOrDefault<T>(string propertyName, int tick, T defaultValue)
-        {
-            var query = Data.Query(propertyName, (tick, ScopedSettings.MaxTick), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
-
-            query = query.OrderBy(pair => pair.Key.Tick)
-                .ThenBy(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
-        }
-        #endregion
-
-        #region Detailed Next methods
+        [Obsolete("Not implemented yet.")]
         public IEnumerable<T> GetDetailedOrNext<T>(string propertyName, int tick)
         {
+            /*
             var query = Data.Query(propertyName, (tick, ScopedSettings.MaxTick), ScopedSettings.Tags);
             if (!query.Any())
             {
@@ -198,10 +257,15 @@ namespace Tracking
 
             var itemsToSelect = query.Select(x => x.Value);
             return (IEnumerable<T>)itemsToSelect;
+            */
+
+            return default;
         }
 
+        [Obsolete("Not implemented yet.")]
         public IEnumerable<T> GetDetailedOrNextOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
         {
+            /*
             var query = Data.Query(propertyName, (tick, ScopedSettings.MaxTick), ScopedSettings.Tags);
             if (!query.Any()) return defaultValue;
 
@@ -210,6 +274,9 @@ namespace Tracking
 
             var itemsToSelect = query.Select(x => x.Value);
             return (IEnumerable<T>)itemsToSelect;
+            */
+
+            return default;
         }
         #endregion
 

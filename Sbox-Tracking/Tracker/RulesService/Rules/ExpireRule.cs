@@ -18,8 +18,14 @@ namespace Tracking.Rules
         public override bool? ShouldDelete(TrackerKey key, object obj)
         {
 
-            
+            return null;
 
+            var tickEstimate = TimeUtility.SecondToTick(Time.Now - Seconds);
+
+
+            // If lower than tick estimate amount then has estimated to of passed expire amount.
+            if (tickEstimate < key.Tick)
+                return true;
 
             return base.ShouldDelete(key, obj);
         }

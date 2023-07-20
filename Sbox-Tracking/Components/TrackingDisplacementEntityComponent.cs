@@ -53,12 +53,18 @@ namespace Sandbox.Components
             if (Tracker == null)
                 return;
 
+
+            //if(Time.Tick % 2 !=0) return;
+
             var displacementTime = Time.Now - DisplacementSeconds;
+
+            var displacementTick = Time.Tick - 100;
+
 
             // TODO: This logic just feels wrong and we should be doing something like "Second" here idk tho.
 
 
-            using (var tracker = Tracker.ScopeBySeconds(displacementTime, Time.Now))
+            using (var tracker = Tracker.ScopeByTicks(displacementTick, Time.Tick))
             {
                 Vector3 lastKnownPosition = DisplacedEntity.Position;
                 Rotation lastKnownRotation = DisplacedEntity.Rotation;
@@ -66,9 +72,10 @@ namespace Sandbox.Components
                 // Check if tracking data exists for both position and rotation at displacementTick
                 if (tracker.Exists(nameof(Entity.Position)) && tracker.Exists(nameof(Entity.Rotation)))
                 {
+
                     // Get the position and rotation of the Entity at displacementTick
-                    var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTime, lastKnownPosition);
-                    var rotationOfTracker = tracker.GetOrNextOrDefault<Rotation>(nameof(Entity.Rotation), displacementTime, lastKnownRotation);
+                    var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTick, lastKnownPosition);
+                    var rotationOfTracker = tracker.GetOrNextOrDefault<Rotation>(nameof(Entity.Rotation), displacementTick, lastKnownRotation);
 
                     // Apply the tracked position and rotation to the DisplacedEntity if they're not the same already
                     if (DisplacedEntity.Position != positionOfTracked || DisplacedEntity.Rotation != rotationOfTracker)
