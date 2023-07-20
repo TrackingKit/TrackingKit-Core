@@ -97,7 +97,8 @@ namespace Tracking
             return Values[weakReference];
         }
 
-        public static void Clear() => Values.Clear();
+        public static void Clear() 
+            => Values.Clear();
 
         internal static IEnumerable<(object key, Tracker obj)> GetAll()
         {

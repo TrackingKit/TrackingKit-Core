@@ -26,7 +26,7 @@ namespace Tracking
         // TODO: Should track count inside.
         public int AllCount { get; protected set; }
 
-        private static bool MatchTags(TaggedData data, string[] tags)
+        private static bool MatchTags(TaggedData data, IEnumerable<string> tags)
         {
             if (tags == null || !tags.Any())
             {
@@ -102,22 +102,24 @@ namespace Tracking
 
         #region Latest
 
-        public bool TryGetLatestValue(string propertyName, int tick, out KeyValuePair<TrackerKey, object> value, params string[] tags)
+        public bool TryGetLatestValue(TrackerQuery query, out TrackerQueryResult result)
         {
-            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            result = new TrackerQueryResult();
+
+            if (data.TryGetValue(query.PropertyName, out var tickDict) && tickDict.TryGetValue(query.Tick, out var versionDict))
             {
                 var matchingVersions = versionDict
-                    .Where(kv => MatchTags(kv.Value, tags))  // Filter on tags
+                    .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
                     .OrderByDescending(kv => kv.Key);  // Highest version first
 
                 // If any values with matching tags are found, return the one with the highest version
                 if (matchingVersions.Any())
                 {
                     var highestVersion = matchingVersions.First();
-                    value = new KeyValuePair<TrackerKey, object>(new TrackerKey
+                    result.Value = new KeyValuePair<TrackerKey, object>(new TrackerKey
                     {
-                        PropertyName = propertyName,
-                        Tick = tick,
+                        PropertyName = query.PropertyName,
+                        Tick = query.Tick,
                         Version = highestVersion.Key,
                         Tags = highestVersion.Value.Tags
                     }, highestVersion.Value.Data);
@@ -126,34 +128,38 @@ namespace Tracking
             }
 
             // If no values with matching tags are found, return false
-            value = default;
             return false;
         }
 
-        public bool TryGetLatestValueAtNextAvailableTick(string propertyName, int tick, out KeyValuePair<TrackerKey, object> value, int stopIfTick = int.MaxValue, params string[] tags)
+        public bool TryGetLatestValueAtNextAvailableTick(TrackerRangeQuery query, out TrackerQueryResult result)
         {
-            if (data.TryGetValue(propertyName, out var tickDict))
+            result = new TrackerQueryResult();
+
+            if (data.TryGetValue(query.PropertyName, out var tickDict))
             {
-                var nextTicks = tickDict.Keys.Where(t => t > tick && t <= stopIfTick).OrderBy(t => t); // Ensure ticks are in ascending order and within bounds
+                var nextTicks = tickDict.Keys.Where(t => t > query.MinTick && t <= query.MaxTick).OrderBy(t => t); // Ensure ticks are in ascending order and within bounds
                 foreach (var nextTick in nextTicks)
                 {
                     if (tickDict.TryGetValue(nextTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, tags))
+                            .Where(kv => MatchTags(kv.Value, query.Tags))
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them
                         if (matchingVersions.Any())
                         {
                             var highestVersion = matchingVersions.First();
-                            value = new KeyValuePair<TrackerKey, object>(new TrackerKey
+
+
+                            result.Value = new KeyValuePair<TrackerKey, object>(new TrackerKey
                             {
-                                PropertyName = propertyName,
+                                PropertyName = query.PropertyName,
                                 Tick = nextTick,
                                 Version = highestVersion.Key,
                                 Tags = highestVersion.Value.Tags
                             }, highestVersion.Value.Data);
+
                             return true;
                         }
                     }
@@ -161,30 +167,31 @@ namespace Tracking
             }
 
             // If no values with matching tags are found after examining all ticks, return false
-            value = default;
             return false;
         }
 
-        public bool TryGetLatestValueAtPreviousAvailableTick(string propertyName, int tick, out KeyValuePair<TrackerKey, object> value, int stopIfTick = int.MinValue, params string[] tags)
+        public bool TryGetLatestValueAtPreviousAvailableTick(TrackerRangeQuery query, out TrackerQueryResult result)
         {
-            if (data.TryGetValue(propertyName, out var tickDict))
+            result = new TrackerQueryResult();
+
+            if (data.TryGetValue(query.PropertyName, out var tickDict))
             {
-                var previousTicks = tickDict.Keys.Where(t => t < tick && t >= stopIfTick).OrderByDescending(t => t); // Ensure ticks are in descending order and within bounds
+                var previousTicks = tickDict.Keys.Where(t => t < query.MaxTick && t >= query.MinTick).OrderByDescending(t => t); // Ensure ticks are in descending order and within bounds
                 foreach (var previousTick in previousTicks)
                 {
                     if (tickDict.TryGetValue(previousTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, tags))
+                            .Where(kv => MatchTags(kv.Value, query.Tags))
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them
                         if (matchingVersions.Any())
                         {
                             var highestVersion = matchingVersions.First();
-                            value = new KeyValuePair<TrackerKey, object>(new TrackerKey
+                            result.Value = new KeyValuePair<TrackerKey, object>(new TrackerKey
                             {
-                                PropertyName = propertyName,
+                                PropertyName = query.PropertyName,
                                 Tick = previousTick,
                                 Version = highestVersion.Key,
                                 Tags = highestVersion.Value.Tags
@@ -196,7 +203,6 @@ namespace Tracking
             }
 
             // If no values with matching tags are found after examining all ticks, return false
-            value = default;
             return false;
         }
 
@@ -204,19 +210,21 @@ namespace Tracking
 
         #region Detailed
 
-        public bool TryGetDetailedValue(string propertyName, int tick, out IEnumerable<KeyValuePair<TrackerKey, object>> values, params string[] tags)
+        public bool TryGetDetailedValue(TrackerQuery query, out TrackerDetailedQueryResult result)
         {
-            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            result = new TrackerDetailedQueryResult();
+
+            if (data.TryGetValue(query.PropertyName, out var tickDict) && tickDict.TryGetValue(query.Tick, out var versionDict))
             {
                 var matchingVersions = versionDict
-                    .Where(kv => MatchTags(kv.Value, tags))  // Filter on tags
+                    .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
                     .OrderByDescending(kv => kv.Key);  // Highest version first
 
                 // If any values with matching tags are found, return them
                 if (matchingVersions.Any())
                 {
-                    values = matchingVersions.Select(kv => new KeyValuePair<TrackerKey, object>(
-                        new TrackerKey { PropertyName = propertyName, Tick = tick, Version = kv.Key, Tags = kv.Value.Tags },
+                    result.Values = matchingVersions.Select(kv => new KeyValuePair<TrackerKey, object>(
+                        new TrackerKey { PropertyName = query.PropertyName, Tick = query.Tick, Version = kv.Key, Tags = kv.Value.Tags },
                         kv.Value.Data
                     ));
                     return true;
@@ -224,28 +232,29 @@ namespace Tracking
             }
 
             // If no values with matching tags are found, return false
-            values = null;
             return false;
         }
 
-        public bool TryGetDetailedValuesAtNextAvailableTick(string propertyName, int tick, out IEnumerable<KeyValuePair<TrackerKey, object>> values, int stopIfTick = int.MaxValue, params string[] tags)
+        public bool TryGetDetailedValuesAtNextAvailableTick(TrackerRangeQuery query, out TrackerDetailedQueryResult result)
         {
-            if (data.TryGetValue(propertyName, out var tickDict))
+            result = new TrackerDetailedQueryResult();
+
+            if (data.TryGetValue(query.PropertyName, out var tickDict))
             {
-                var nextTicks = tickDict.Keys.Where(t => t > tick && t <= stopIfTick).OrderBy(t => t); // Ensure ticks are in ascending order and within bounds
+                var nextTicks = tickDict.Keys.Where(t => t > query.MinTick && t <= query.MaxTick).OrderBy(t => t); // Ensure ticks are in ascending order and within bounds
                 foreach (var nextTick in nextTicks)
                 {
                     if (tickDict.TryGetValue(nextTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, tags))  // Filter on tags
+                            .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them
                         if (matchingVersions.Any())
                         {
-                            values = matchingVersions.Select(kv => new KeyValuePair<TrackerKey, object>(
-                                new TrackerKey { PropertyName = propertyName, Tick = nextTick, Version = kv.Key, Tags = kv.Value.Tags },
+                            result.Values = matchingVersions.Select(kv => new KeyValuePair<TrackerKey, object>(
+                                new TrackerKey { PropertyName = query.PropertyName, Tick = nextTick, Version = kv.Key, Tags = kv.Value.Tags },
                                 kv.Value.Data
                             ));
                             return true;
@@ -255,28 +264,29 @@ namespace Tracking
             }
 
             // If no values with matching tags are found after examining all ticks, return false
-            values = null;
             return false;
         }
 
-        public bool TryGetDetailedValuesAtPreviousAvailableTick(string propertyName, int tick, out IEnumerable<KeyValuePair<TrackerKey, object>> values, int stopIfTick = int.MinValue, params string[] tags)
+        public bool TryGetDetailedValuesAtPreviousAvailableTick(TrackerRangeQuery query, out TrackerDetailedQueryResult result)
         {
-            if (data.TryGetValue(propertyName, out var tickDict))
+            result = new TrackerDetailedQueryResult();
+
+            if (data.TryGetValue(query.PropertyName, out var tickDict))
             {
-                var previousTicks = tickDict.Keys.Where(t => t < tick && t >= stopIfTick).OrderByDescending(t => t); // Ensure ticks are in descending order and within bounds
+                var previousTicks = tickDict.Keys.Where(t => t < query.MaxTick && t >= query.MinTick).OrderByDescending(t => t); // Ensure ticks are in descending order and within bounds
                 foreach (var previousTick in previousTicks)
                 {
                     if (tickDict.TryGetValue(previousTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, tags))  // Filter on tags
+                            .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them
                         if (matchingVersions.Any())
                         {
-                            values = matchingVersions.Select(kv => new KeyValuePair<TrackerKey, object>(
-                                new TrackerKey { PropertyName = propertyName, Tick = previousTick, Version = kv.Key, Tags = kv.Value.Tags },
+                            result.Values = matchingVersions.Select(kv => new KeyValuePair<TrackerKey, object>(
+                                new TrackerKey { PropertyName = query.PropertyName, Tick = previousTick, Version = kv.Key, Tags = kv.Value.Tags },
                                 kv.Value.Data
                             ));
                             return true;
@@ -286,7 +296,6 @@ namespace Tracking
             }
 
             // If no values with matching tags are found after examining all ticks, return false
-            values = null;
             return false;
         }
 

@@ -4,7 +4,7 @@ namespace Tracking
 {
     public class TrackerQueryResult : TrackerBaseQueryResult
     {
-        KeyValuePair<TrackerKey, object> Value { get; set; }
+        public KeyValuePair<TrackerKey, object> Value { get; set; }
     }
 
 

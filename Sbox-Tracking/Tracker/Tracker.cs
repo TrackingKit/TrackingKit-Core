@@ -125,12 +125,16 @@ namespace Tracking
             if (Pause)
                 return;
 
+            TrackerQuery trackerQuery = new TrackerQuery()
+            {
+                PropertyName = propertyName,
+                Tick = tick,
+            };
 
-            var latestValueDataFound = Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> valueFound );
+            var latestValueDataFound = Data.TryGetLatestValue(trackerQuery, out TrackerQueryResult result);
 
             // Getting the latest version recorded for the specified property at a given tick
-            int nextVersion = latestValueDataFound ? valueFound.Key.Version + 1 : 1;
-
+            int nextVersion = latestValueDataFound ? result.Value.Key.Version + 1 : 1;
 
             // Merging identifiers from the current scope with the identifiers passed as parameters
             var tags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray();
@@ -138,15 +142,16 @@ namespace Tracking
             // TODO: Key should come back for circuit.
 
             // Checking rules to see if the property can be added
-            var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldAdd(propertyName, value));
+            var resultRule = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldAdd(propertyName, value));
 
             // If the result is false, we exit the method without adding the property
-            if (result.HasValue && result.Value == false)
+            if (resultRule.HasValue && resultRule.Value == false)
                 return;
 
             // Adding the value with the given property name, tick, new version, value, and tags
             Data.SetValue(propertyName, tick, nextVersion, value, tags);
         }
+
 
         public void Add(string propertyName, object value, params string[] idents)
             => Add(propertyName, value, Time.Tick, idents);

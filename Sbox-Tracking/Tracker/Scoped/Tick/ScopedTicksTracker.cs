@@ -80,14 +80,22 @@ namespace Tracking
         {
             ClampAndWarn(ref tick);
 
-            if (Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> value, ScopedSettings.Tags))
-                return (T)value.Value;
+            TrackerQuery trackerQuery = new TrackerQuery()
+            {
+                Tags = ScopedSettings.Tags,
+                PropertyName = propertyName,
+                Tick = tick,
+            };
+
+            if (Data.TryGetLatestValue(trackerQuery, out TrackerQueryResult result))
+                return (T)result.Value.Value;
 
             if (logError)
                 Log.Error($"No valid found for {propertyName}, {tick}");
 
             return defaultValue;
         }
+
 
         public T Get<T>(string propertyName, int tick)
             => GetInternal<T>(propertyName, tick, logError: true);
@@ -104,13 +112,31 @@ namespace Tracking
         {
             ClampAndWarn(ref tick);
 
+            TrackerQuery trackerQuery = new TrackerQuery()
+            {
+                Tags = ScopedSettings.Tags,
+                PropertyName = propertyName,
+                Tick = tick,
+            };
+
             // Try to get the value at the given tick
-            bool found = Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> value, ScopedSettings.Tags);
+            bool found = Data.TryGetLatestValue(trackerQuery, out TrackerQueryResult result);
 
             // If no value was found at the given tick, try to get the latest value before that tick
             if (!found)
             {
-                found = Data.TryGetLatestValueAtPreviousAvailableTick(propertyName, tick, out value, tags: ScopedSettings.Tags, stopIfTick: ScopedSettings.MinTick );
+
+                TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
+                {
+                    Tags = ScopedSettings.Tags,
+                    PropertyName = propertyName,
+                    MaxTick = tick,
+                    MinTick = ScopedSettings.MinTick
+                };
+
+
+
+                found = Data.TryGetLatestValueAtPreviousAvailableTick(trackerRangedQuery, out TrackerQueryResult resultPrevious);
 
                 // If no value was found even at the previous ticks, log an error and return default value
                 if (!found)
@@ -124,7 +150,7 @@ namespace Tracking
                 }
             }
 
-            return (T)value.Value;
+            return (T)result.Value.Value;
         }
 
         public T GetOrPrevious<T>(string propertyName, int tick)
@@ -141,28 +167,50 @@ namespace Tracking
         {
             ClampAndWarn(ref tick);
 
-            // First try to get the value at the given tick
-            bool found = Data.TryGetLatestValue(propertyName, tick, out KeyValuePair<TrackerKey, object> value, ScopedSettings.Tags);
+            TrackerQuery trackerQuery = new TrackerQuery()
+            {
+                Tags = ScopedSettings.Tags,
+                PropertyName = propertyName,
+                Tick = tick,
+            };
 
-            // If no value was found at the given tick, try to get the latest value after that tick
+            // Try to get the value at the given tick
+            bool found = Data.TryGetLatestValue(trackerQuery, out TrackerQueryResult result);
+
+            // If no value was found at the given tick, try to get the earliest value after that tick
             if (!found)
             {
-                found = Data.TryGetLatestValueAtNextAvailableTick(propertyName, tick, out value, tags: ScopedSettings.Tags, stopIfTick: ScopedSettings.MaxTick);
+                TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
+                {
+                    Tags = ScopedSettings.Tags,
+                    PropertyName = propertyName,
+                    MinTick = tick,
+                    MaxTick = ScopedSettings.MaxTick
+                };
+
+                found = Data.TryGetLatestValueAtNextAvailableTick(trackerRangedQuery, out TrackerQueryResult resultNext);
+
+                // If a value was found at the next available tick, update the result
+                if (found)
+                {
+                    result = resultNext;
+                }
             }
 
-            // If no value was found after the given tick, return the default value
+            // If no value was found even at the next ticks, log an error and return default value
             if (!found)
             {
                 if (logError)
                 {
-                    Log.Error($"No valid value found for {propertyName}, {tick}");
+                    Log.Error($"No valid value found for {propertyName}, {tick} at next ticks");
                 }
 
                 return defaultValue;
             }
 
-            return (T)value.Value;
+            return (T)result.Value.Value;
         }
+
 
         public T GetOrNext<T>(string propertyName, int tick)
             => GetOrNextInternal<T>(propertyName, tick, logError: true);
@@ -179,7 +227,14 @@ namespace Tracking
         {
             ClampAndWarn(ref tick);
 
-            bool found = Data.TryGetDetailedValue(propertyName, tick, out IEnumerable<KeyValuePair<TrackerKey, object>> value, ScopedSettings.Tags);
+            TrackerQuery trackerQuery = new TrackerQuery()
+            {
+                Tags = ScopedSettings.Tags,
+                PropertyName = propertyName,
+                Tick = tick,
+            };
+
+            bool found = Data.TryGetDetailedValue(trackerQuery, out TrackerDetailedQueryResult result);
 
             if (!found)
             {
@@ -191,8 +246,9 @@ namespace Tracking
                 return defaultValue;
             }
 
-            return value.Select(x => (T)x.Value);
+            return result.Values.Select(x => (T)x.Value);
         }
+
 
         public IEnumerable<T> GetDetailed<T>(string propertyName, int tick)
             => GetDetailedInternal<T>(propertyName, tick, logError: true);
@@ -208,13 +264,28 @@ namespace Tracking
         {
             ClampAndWarn(ref tick);
 
+            TrackerQuery trackerQuery = new TrackerQuery()
+            {
+                Tags = ScopedSettings.Tags,
+                PropertyName = propertyName,
+                Tick = tick,
+            };
+
             // First try to get the detailed value at the given tick
-            bool found = Data.TryGetDetailedValue(propertyName, tick, out IEnumerable<KeyValuePair<TrackerKey, object>> values, ScopedSettings.Tags);
+            bool found = Data.TryGetDetailedValue(trackerQuery, out TrackerDetailedQueryResult result);
 
             // If no value was found at the given tick, try to get the detailed value before that tick
             if (!found)
             {
-                found = Data.TryGetDetailedValuesAtPreviousAvailableTick(propertyName, tick, out values, tags: ScopedSettings.Tags, stopIfTick: ScopedSettings.MinTick);
+                TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
+                {
+                    Tags = ScopedSettings.Tags,
+                    PropertyName = propertyName,
+                    MaxTick = tick,
+                    MinTick = ScopedSettings.MinTick
+                };
+
+                found = Data.TryGetDetailedValuesAtPreviousAvailableTick(trackerRangedQuery, out result);
             }
 
             // If no value was found before the given tick, return the default value
@@ -228,8 +299,9 @@ namespace Tracking
                 return defaultValue;
             }
 
-            return values.Select(kv => (T)kv.Value);
+            return result.Values.Select(kv => (T)kv.Value);
         }
+
 
         public IEnumerable<T> GetDetailedOrPrevious<T>(string propertyName, int tick)
             => GetDetailedOrPreviousInternal<T>(propertyName, tick, logError: true);

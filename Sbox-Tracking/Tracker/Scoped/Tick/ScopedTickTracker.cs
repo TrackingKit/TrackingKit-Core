@@ -20,8 +20,8 @@ namespace Tracking
         }
 
 
-        public int Count()
-            => Data.Count;
+        //public int Count()
+        //    => Data.Count;
 
         public IEnumerable<string> GetDistinctKeys()
             => Data.DistinctKeys;
