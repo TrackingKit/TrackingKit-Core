@@ -54,6 +54,7 @@ namespace Tracking
                 }
                 else
                 {
+                    // TODO: We might wanna add custom check "rules" (Idk what to call them).
                     if (target is IEntity targetEntity && !targetEntity.IsValid)
                     {
                         deadKeys.Add(key);

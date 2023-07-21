@@ -44,19 +44,19 @@ namespace Tracking
         public IEnumerable<string> DistinctKeys 
             => data.Keys;
 
-        public bool Exists(string propertyName, int minTick = int.MinValue, int maxTick = int.MaxValue, params string[] tags)
+        public bool Exists(TrackerRangeQuery trackerRangeQuery)
         {
             // Check if the property exists
-            if (data.TryGetValue(propertyName, out var tickDict))
+            if (data.TryGetValue(trackerRangeQuery.PropertyName, out var tickDict))
             {
                 // Check if any of the ticks for this property falls within the given range
                 foreach (var tickKv in tickDict)
                 {
-                    if (tickKv.Key >= minTick && tickKv.Key <= maxTick)
+                    if (tickKv.Key >= trackerRangeQuery.MinTick && tickKv.Key <= trackerRangeQuery.MaxTick)
                     {
                         // Check for any matching tags
                         var matchingVersions = tickKv.Value
-                            .Where(versionKv => MatchTags(versionKv.Value, tags))
+                            .Where(versionKv => MatchTags(versionKv.Value, trackerRangeQuery.Tags))
                             .OrderByDescending(versionKv => versionKv.Key);  // Highest version first
 
                         if (matchingVersions.Any())

@@ -44,7 +44,10 @@ namespace Tracking
 
         // TODO Log.Error scoping out of bounds 
         public bool Exists(string propertyName)
-            => Data.Exists(propertyName, ScopedSettings.MinTick, ScopedSettings.MaxTick, ScopedSettings.Tags);
+            => Data.Exists(new TrackerRangeQuery() 
+            { 
+                MinTick = ScopedSettings.MinTick, MaxTick = ScopedSettings.MaxTick, PropertyName = propertyName, Tags = ScopedSettings.Tags
+            });
 
 
 
@@ -54,21 +57,39 @@ namespace Tracking
             ClampAndWarn(ref tick);
 
             // TODO: Exists
-            return Data.Exists(propertyName, ScopedSettings.MinTick, tick, ScopedSettings.Tags);
+            return Data.Exists(new TrackerRangeQuery()
+            {
+                MinTick = ScopedSettings.MinTick,
+                MaxTick = tick,
+                PropertyName = propertyName,
+                Tags = ScopedSettings.Tags
+            });
         }
 
         public bool ExistsAtOrAfter(string propertyName, int tick)
         {
             ClampAndWarn(ref tick);
 
-            return Data.Exists(propertyName, tick, ScopedSettings.MaxTick, ScopedSettings.Tags);
+            return Data.Exists(new TrackerRangeQuery()
+            {
+                MinTick = tick,
+                MaxTick = ScopedSettings.MaxTick,
+                PropertyName = propertyName,
+                Tags = ScopedSettings.Tags
+            });
         }
 
         public bool ExistsAt(string propertyName, int tick)
         {
             ClampAndWarn(ref tick);
 
-            return Data.Exists(propertyName, tick, tick, ScopedSettings.Tags);
+            return Data.Exists(new TrackerRangeQuery()
+            {
+                MinTick = ScopedSettings.MinTick,
+                MaxTick = ScopedSettings.MaxTick,
+                PropertyName = propertyName,
+                Tags = ScopedSettings.Tags
+            });
         }
 
 
