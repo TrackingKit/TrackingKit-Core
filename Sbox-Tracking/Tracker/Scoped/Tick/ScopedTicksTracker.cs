@@ -334,43 +334,55 @@ namespace Tracking
 
         #region GetDetailedOrNext methods
 
-        [Obsolete("Not implemented yet.")]
-        public IEnumerable<T> GetDetailedOrNext<T>(string propertyName, int tick)
+        private IEnumerable<T> GetDetailedOrNextInternal<T>(string propertyName, int tick, bool logError, IEnumerable<T> defaultValue = default)
         {
-            /*
-            var query = Data.Query(propertyName, (tick, ScopedSettings.MaxTick), ScopedSettings.Tags);
-            if (!query.Any())
+            ClampAndWarn(ref tick);
+
+            TrackerQuery trackerQuery = new TrackerQuery()
             {
-                Log.Error("No values found");
-                return default;
+                Tags = ScopedSettings.Tags,
+                PropertyName = propertyName,
+                Tick = tick,
+            };
+
+            // First try to get the detailed value at the given tick
+            bool found = Data.TryGetDetailedValue(trackerQuery, out TrackerDetailedQueryResult result);
+
+            // If no value was found at the given tick, try to get the detailed value after that tick
+            if (!found)
+            {
+                TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
+                {
+                    Tags = ScopedSettings.Tags,
+                    PropertyName = propertyName,
+                    MinTick = tick,
+                    MaxTick = ScopedSettings.MaxTick
+                };
+
+                found = Data.TryGetDetailedValuesAtNextAvailableTick(trackerRangedQuery, out result);
             }
 
-            query = query.OrderBy(pair => pair.Key.Tick)
-                         .ThenBy(pair => pair.Key.Version);
+            // If no value was found after the given tick, return the default value
+            if (!found)
+            {
+                if (logError)
+                {
+                    Log.Error($"No valid values found for {propertyName}, {tick}");
+                }
 
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
-            */
+                return defaultValue;
+            }
 
-            return default;
+            return result.Values.Select(kv => (T)kv.Value);
         }
 
-        [Obsolete("Not implemented yet.")]
+        public IEnumerable<T> GetDetailedOrNext<T>(string propertyName, int tick)
+            => GetDetailedOrNextInternal<T>(propertyName, tick, logError: true);
+
         public IEnumerable<T> GetDetailedOrNextOrDefault<T>(string propertyName, int tick, IEnumerable<T> defaultValue)
-        {
-            /*
-            var query = Data.Query(propertyName, (tick, ScopedSettings.MaxTick), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
+            => GetDetailedOrNextInternal<T>(propertyName, tick, logError: false, defaultValue);
 
-            query = query.OrderBy(pair => pair.Key.Tick)
-                         .ThenBy(pair => pair.Key.Version);
 
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
-            */
-
-            return default;
-        }
         #endregion
 
         public void Dispose()
