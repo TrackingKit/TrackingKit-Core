@@ -1,4 +1,6 @@
-﻿namespace Tracking
+﻿using Sandbox;
+
+namespace Tracking
 {
     public partial class ScopedTickSettings
     {
@@ -8,25 +10,38 @@
 
         public bool IsSpecificTick => MinTick == MaxTick;
 
-
-        public string[] Tags { get; }
+        public TagList Tags { get; }
 
         public int SpecificTick
         {
             get
             {
                 if (!IsSpecificTick)
+                {
                     Log.Error("Not specific tick");
+                    return -1; // return an invalid value or throw an exception
+                }
 
                 return MaxTick;
             }
         }
 
-        public ScopedTickSettings(int minTick, int maxTick, params string[] tags)
+        public ScopedTickSettings(int minTick, int maxTick, TagList tags = default)
         {
-            MinTick = minTick;
-            MaxTick = maxTick;
-            Tags = tags;
+            if(minTick > maxTick)
+            {
+                Log.Warning("Swapped MinTick and MaxTick as MinTick greater than MaxTick");
+                MinTick = maxTick;
+                MaxTick = minTick;
+            }
+            else
+            {
+                MinTick = minTick;
+                MaxTick = maxTick;
+                Tags = tags;
+            }
+
+
         }
     }
 }

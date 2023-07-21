@@ -47,7 +47,7 @@ namespace Tracking.RulesService
             {
                 rule = new T()
                 {
-
+                    Data = Data,
                 };
 
                 Rules.Add(rule);
@@ -61,7 +61,12 @@ namespace Tracking.RulesService
         {
             if (!Rules.OfType<T>().Any())
             {
-                Rules.Add(new T());
+                var rule = new T()
+                {
+                    Data = Data 
+                };
+
+                Rules.Add(rule);
             }
         }
 

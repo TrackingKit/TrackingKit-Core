@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Sandbox;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,12 +10,10 @@ namespace Tracking.Rules
 {
     public abstract class TrackerRule
     {
+        [Obsolete("Potentially deleted as too much freedom given.")]
         public TrackerData Data { get; internal init; }
 
         
-
-
-
 
         // Optional as some rules might not have a context.
 

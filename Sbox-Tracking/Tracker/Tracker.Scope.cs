@@ -10,36 +10,19 @@ namespace Tracking
 
     public partial class Tracker
     {
-        
-        protected bool CanScope(int minTick, int maxTick, bool supressMessages = true, params string[] idents)
-        {
-            if(minTick > maxTick)
-            {
-                if (!supressMessages) Log.Warning("MinTick greater than MaxTick");
-            }
-
-            return true;
-        }
-
-
-        // TODO: Sort this all out.
 
         #region Tick(s)
 
         public ScopedTickTracker ScopeByTick(int specificTick, params string[] tags)
         {
-            if (!CanScope(specificTick, specificTick, false, tags)) return null;
-
 
             return default;
             //return new ScopedTickTracker(Data);
         }
 
 
-        public ScopedTicksTracker ScopeByTicks(int minTick, int maxTick, params string[] tags)
+        public ScopedTicksTracker ScopeByTicks(int minTick, int maxTick, TagList tags = default)
         {
-            if (!CanScope(minTick, maxTick, false, tags)) return null;
-
 
             ScopedTickSettings scopedSettings = new(minTick, maxTick, tags);
 
@@ -47,9 +30,8 @@ namespace Tracking
         }
 
 
-        public ScopedTicksTracker ScopeByTicks(params string[] tags)
+        public ScopedTicksTracker ScopeByTicks(TagList tags)
         {
-            if (!CanScope(int.MinValue, int.MaxValue, false, tags)) return null;
 
             ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue, tags);
 
@@ -59,8 +41,6 @@ namespace Tracking
         // TODO: is this needed if params function above does same?
         public ScopedTicksTracker ScopeByTicks()
         {
-            if (!CanScope(int.MinValue, int.MaxValue, false)) return null;
-
 
             ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue);
 
