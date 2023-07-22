@@ -6,7 +6,7 @@ namespace Tracking
     public class TrackerBaseQuery
     {
         public string PropertyName { get; set; }
-        public TagList Tags { get; set; }
+        public TagFilter Filter { get; set; }
 
     }
 

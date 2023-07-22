@@ -15,7 +15,7 @@ namespace Tracking
         public bool IsSpecificSecond => MinSecond == MaxSecond;
 
 
-        public string[] Tags { get; }
+        public TagFilter Filter { get; }
 
         public float SpecificTick
         {
@@ -28,11 +28,11 @@ namespace Tracking
             }
         }
 
-        public ScopedSecondSettings(float minSecond, float maxSecond, params string[] tags)
+        public ScopedSecondSettings(float minSecond, float maxSecond, TagFilter filter)
         {
             MinSecond = minSecond;
             MaxSecond = maxSecond;
-            Tags = tags;
+            Filter = filter;
         }
     }
 }

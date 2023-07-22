@@ -10,7 +10,7 @@ namespace Tracking
 
         public bool IsSpecificTick => MinTick == MaxTick;
 
-        public TagList Tags { get; }
+        public TagFilter Filter { get; }
 
         public int SpecificTick
         {
@@ -26,7 +26,7 @@ namespace Tracking
             }
         }
 
-        public ScopedTickSettings(int minTick, int maxTick, TagList tags = default)
+        public ScopedTickSettings(int minTick, int maxTick, TagFilter filter = default)
         {
             if(minTick > maxTick)
             {
@@ -38,7 +38,7 @@ namespace Tracking
             {
                 MinTick = minTick;
                 MaxTick = maxTick;
-                Tags = tags;
+                Filter = filter;
             }
 
 

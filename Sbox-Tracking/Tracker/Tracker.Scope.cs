@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Sandbox.Gizmo;
+
+
+
+
 
 namespace Tracking
 {
@@ -13,7 +16,7 @@ namespace Tracking
 
         #region Tick(s)
 
-        public ScopedTickTracker ScopeByTick(int specificTick, params string[] tags)
+        public ScopedTickTracker ScopeByTick(int specificTick, TagFilter filter = default)
         {
 
             return default;
@@ -21,19 +24,19 @@ namespace Tracking
         }
 
 
-        public ScopedTicksTracker ScopeByTicks(int minTick, int maxTick, TagList tags = default)
+        public ScopedTicksTracker ScopeByTicks(int minTick, int maxTick, TagFilter filter = default)
         {
 
-            ScopedTickSettings scopedSettings = new(minTick, maxTick, tags);
+            ScopedTickSettings scopedSettings = new(minTick, maxTick, filter);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
 
 
-        public ScopedTicksTracker ScopeByTicks(TagList tags)
+        public ScopedTicksTracker ScopeByTicks(TagFilter filter = default)
         {
 
-            ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue, tags);
+            ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue, filter);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
@@ -52,21 +55,19 @@ namespace Tracking
 
         #region Second(s)
 
-        public ScopedSecondsTracker ScopeBySeconds(params string[] tags)
+        public ScopedSecondsTracker ScopeBySeconds(TagFilter filter = default)
         {
-            ScopedSecondSettings scopedSettings = new(float.MinValue, float.MaxValue, tags);
+            ScopedSecondSettings scopedSettings = new(float.MinValue, float.MaxValue, filter);
 
             return new ScopedSecondsTracker(Data, scopedSettings);
         }
 
-        public ScopedSecondsTracker ScopeBySeconds(float minSecond, float maxSecond, params string[] tags)
+        public ScopedSecondsTracker ScopeBySeconds(float minSecond, float maxSecond, TagFilter filter = default)
         {
-            ScopedSecondSettings scopedSettings = new(minSecond, maxSecond, tags);
+            ScopedSecondSettings scopedSettings = new(minSecond, maxSecond, filter);
 
             return new ScopedSecondsTracker(Data, scopedSettings);
         }
-
-
 
 
         #endregion

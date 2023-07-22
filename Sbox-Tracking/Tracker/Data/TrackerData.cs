@@ -26,9 +26,9 @@ namespace Tracking
         // TODO: Should track count inside.
         public int AllCount { get; protected set; }
 
-        private static bool MatchTags(TaggedData data, IEnumerable<string> tags)
+        private static bool MatchTags(TaggedData data, TagFilter tagFilter)
         {
-            if (tags == null || !tags.Any())
+            if (tagFilter == null || !tagFilter.Tags.Any())
             {
                 return true;
             }
@@ -38,8 +38,10 @@ namespace Tracking
                 return false;
             }
 
-            return tags.All(tag => data.Tags.Contains(tag));
+            // Match only if all tags in the data should be included according to the tagFilter
+            return data.Tags.All(tag => tagFilter.ShouldInclude(tag));
         }
+
 
         public IEnumerable<string> DistinctKeys 
             => data.Keys;
@@ -56,7 +58,7 @@ namespace Tracking
                     {
                         // Check for any matching tags
                         var matchingVersions = tickKv.Value
-                            .Where(versionKv => MatchTags(versionKv.Value, trackerRangeQuery.Tags))
+                            .Where(versionKv => MatchTags(versionKv.Value, trackerRangeQuery.Filter))
                             .OrderByDescending(versionKv => versionKv.Key);  // Highest version first
 
                         if (matchingVersions.Any())
@@ -109,7 +111,7 @@ namespace Tracking
             if (data.TryGetValue(query.PropertyName, out var tickDict) && tickDict.TryGetValue(query.Tick, out var versionDict))
             {
                 var matchingVersions = versionDict
-                    .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
+                    .Where(kv => MatchTags(kv.Value, query.Filter))  // Filter on tags
                     .OrderByDescending(kv => kv.Key);  // Highest version first
 
                 // If any values with matching tags are found, return the one with the highest version
@@ -143,7 +145,7 @@ namespace Tracking
                     if (tickDict.TryGetValue(nextTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, query.Tags))
+                            .Where(kv => MatchTags(kv.Value, query.Filter))
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them
@@ -182,7 +184,7 @@ namespace Tracking
                     if (tickDict.TryGetValue(previousTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, query.Tags))
+                            .Where(kv => MatchTags(kv.Value, query.Filter))
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them
@@ -217,7 +219,7 @@ namespace Tracking
             if (data.TryGetValue(query.PropertyName, out var tickDict) && tickDict.TryGetValue(query.Tick, out var versionDict))
             {
                 var matchingVersions = versionDict
-                    .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
+                    .Where(kv => MatchTags(kv.Value, query.Filter))  // Filter on tags
                     .OrderByDescending(kv => kv.Key);  // Highest version first
 
                 // If any values with matching tags are found, return them
@@ -247,7 +249,7 @@ namespace Tracking
                     if (tickDict.TryGetValue(nextTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
+                            .Where(kv => MatchTags(kv.Value, query.Filter))  // Filter on tags
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them
@@ -279,7 +281,7 @@ namespace Tracking
                     if (tickDict.TryGetValue(previousTick, out var versionDict))
                     {
                         var matchingVersions = versionDict
-                            .Where(kv => MatchTags(kv.Value, query.Tags))  // Filter on tags
+                            .Where(kv => MatchTags(kv.Value, query.Filter))  // Filter on tags
                             .OrderByDescending(kv => kv.Key);  // Highest version first
 
                         // If any values with matching tags are found, return them

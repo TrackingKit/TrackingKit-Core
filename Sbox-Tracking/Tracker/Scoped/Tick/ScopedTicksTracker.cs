@@ -46,7 +46,8 @@ namespace Tracking
         public bool Exists(string propertyName)
             => Data.Exists(new TrackerRangeQuery() 
             { 
-                MinTick = ScopedSettings.MinTick, MaxTick = ScopedSettings.MaxTick, PropertyName = propertyName, Tags = ScopedSettings.Tags
+                MinTick = ScopedSettings.MinTick, MaxTick = ScopedSettings.MaxTick, PropertyName = propertyName,
+                Filter = ScopedSettings.Filter
             });
 
 
@@ -62,7 +63,7 @@ namespace Tracking
                 MinTick = ScopedSettings.MinTick,
                 MaxTick = tick,
                 PropertyName = propertyName,
-                Tags = ScopedSettings.Tags
+                Filter = ScopedSettings.Filter
             });
         }
 
@@ -75,7 +76,7 @@ namespace Tracking
                 MinTick = tick,
                 MaxTick = ScopedSettings.MaxTick,
                 PropertyName = propertyName,
-                Tags = ScopedSettings.Tags
+                Filter = ScopedSettings.Filter
             });
         }
 
@@ -88,7 +89,7 @@ namespace Tracking
                 MinTick = ScopedSettings.MinTick,
                 MaxTick = ScopedSettings.MaxTick,
                 PropertyName = propertyName,
-                Tags = ScopedSettings.Tags
+                Filter = ScopedSettings.Filter
             });
         }
 
@@ -103,7 +104,7 @@ namespace Tracking
 
             TrackerQuery trackerQuery = new TrackerQuery()
             {
-                Tags = ScopedSettings.Tags,
+                Filter = ScopedSettings.Filter,
                 PropertyName = propertyName,
                 Tick = tick,
             };
@@ -135,7 +136,7 @@ namespace Tracking
 
             TrackerQuery trackerQuery = new TrackerQuery()
             {
-                Tags = ScopedSettings.Tags,
+                Filter = ScopedSettings.Filter,
                 PropertyName = propertyName,
                 Tick = tick,
             };
@@ -149,7 +150,7 @@ namespace Tracking
 
                 TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
                 {
-                    Tags = ScopedSettings.Tags,
+                    Filter = ScopedSettings.Filter,
                     PropertyName = propertyName,
                     MaxTick = tick,
                     MinTick = ScopedSettings.MinTick
@@ -190,7 +191,7 @@ namespace Tracking
 
             TrackerQuery trackerQuery = new TrackerQuery()
             {
-                Tags = ScopedSettings.Tags,
+                Filter = ScopedSettings.Filter,
                 PropertyName = propertyName,
                 Tick = tick,
             };
@@ -203,7 +204,7 @@ namespace Tracking
             {
                 TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
                 {
-                    Tags = ScopedSettings.Tags,
+                    Filter = ScopedSettings.Filter,
                     PropertyName = propertyName,
                     MinTick = tick,
                     MaxTick = ScopedSettings.MaxTick
@@ -250,7 +251,7 @@ namespace Tracking
 
             TrackerQuery trackerQuery = new TrackerQuery()
             {
-                Tags = ScopedSettings.Tags,
+                Filter = ScopedSettings.Filter,
                 PropertyName = propertyName,
                 Tick = tick,
             };
@@ -287,7 +288,7 @@ namespace Tracking
 
             TrackerQuery trackerQuery = new TrackerQuery()
             {
-                Tags = ScopedSettings.Tags,
+                Filter = ScopedSettings.Filter,
                 PropertyName = propertyName,
                 Tick = tick,
             };
@@ -300,7 +301,7 @@ namespace Tracking
             {
                 TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
                 {
-                    Tags = ScopedSettings.Tags,
+                    Filter = ScopedSettings.Filter,
                     PropertyName = propertyName,
                     MaxTick = tick,
                     MinTick = ScopedSettings.MinTick
@@ -340,7 +341,7 @@ namespace Tracking
 
             TrackerQuery trackerQuery = new TrackerQuery()
             {
-                Tags = ScopedSettings.Tags,
+                Filter = ScopedSettings.Filter,
                 PropertyName = propertyName,
                 Tick = tick,
             };
@@ -353,7 +354,7 @@ namespace Tracking
             {
                 TrackerRangeQuery trackerRangedQuery = new TrackerRangeQuery()
                 {
-                    Tags = ScopedSettings.Tags,
+                    Filter = ScopedSettings.Filter,
                     PropertyName = propertyName,
                     MinTick = tick,
                     MaxTick = ScopedSettings.MaxTick

@@ -23,11 +23,12 @@ namespace Tracking
         //public int Count()
         //    => Data.Count;
 
+        [Obsolete("no filter")]
         public IEnumerable<string> GetDistinctKeys()
             => Data.DistinctKeys;
 
-        public bool Exists(string propertyName)
-            => Data.DistinctKeys.Contains(propertyName);
+        //public bool Exists(string propertyName)
+        //    => Data.Exists
         
         /*
         public T Get<T>(string propertyName)
