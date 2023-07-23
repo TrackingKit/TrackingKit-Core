@@ -36,9 +36,9 @@ namespace Tracking
        //    => Data.Count;
 
 
-        [Obsolete("This doesnt consider scope.")]
-        public IEnumerable<string> GetDistinctKeys()
-            => Data.DistinctKeys;
+       // [Obsolete("This doesnt consider scope.")]
+        //public IEnumerable<string> GetDistinctKeys()
+        //    => Data.DistinctKeys;
 
         // and tags?
 

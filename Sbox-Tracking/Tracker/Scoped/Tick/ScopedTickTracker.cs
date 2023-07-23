@@ -23,9 +23,9 @@ namespace Tracking
         //public int Count()
         //    => Data.Count;
 
-        [Obsolete("no filter")]
-        public IEnumerable<string> GetDistinctKeys()
-            => Data.DistinctKeys;
+       // [Obsolete("no filter")]
+        //public IEnumerable<string> GetDistinctKeys()
+        //    => Data.DistinctKeys;
 
         //public bool Exists(string propertyName)
         //    => Data.Exists

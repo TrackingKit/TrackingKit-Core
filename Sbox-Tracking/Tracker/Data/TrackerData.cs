@@ -1,41 +1,129 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Text.Json.Serialization;
+
 
 namespace Tracking
 {
-
-    public class TaggedData
+    /// <summary>
+    /// This class is used to track data with specific properties. 
+    /// Each property can have multiple "ticks", and each tick can have multiple versions. 
+    /// The data is also tagged for additional organization and filtering capabilities.
+    /// </summary>
+    [JsonConverter(typeof(TrackerDataConverter))]
+    public class TrackerData : ICloneable
     {
-        public object Data { get; }
-        public string[] Tags { get; }
-
-        public TaggedData(object data, string[] tags)
+        public class TaggedData
         {
-            Data = data;
-            Tags = tags;
+            public object Data { get; }
+            public string[] Tags { get; }
+
+            public TaggedData(object data, string[] tags)
+            {
+                Data = data;
+                Tags = tags;
+            }
         }
-    }
+
+        public object Clone()
+            => Clone(default);
+
+        public TrackerData Clone(TagFilter filter = default)
+        {
+            var clone = new TrackerData();
+
+            foreach (var propEntry in data)
+            {
+                var tickDict = new SortedDictionary<int, SortedDictionary<int, TaggedData>>();
+
+                foreach (var tickEntry in propEntry.Value)
+                {
+                    var versionDict = new SortedDictionary<int, TaggedData>();
+
+                    foreach (var versionEntry in tickEntry.Value)
+                    {
+                        if (MatchTags(versionEntry.Value, filter))
+                        {
+                            versionDict[versionEntry.Key] = new TaggedData(versionEntry.Value.Data, versionEntry.Value.Tags.ToArray());
+                        }
+                    }
+
+                    if (versionDict.Count > 0) // If any versions pass the filter for this tick
+                    {
+                        tickDict[tickEntry.Key] = versionDict;
+                    }
+                }
+
+                if (tickDict.Count > 0) // If any ticks pass the filter for this property
+                {
+                    clone.data[propEntry.Key] = tickDict;
+                }
+            }
+
+            clone.AllCount = clone.data.Sum(propEntry => propEntry.Value.Sum(tickEntry => tickEntry.Value.Count));
+
+            return clone;
+        }
 
 
+        public void Merge(TrackerData other)
+        {
+            if (other == null) return;
 
-    public class TrackerData
-    {
-        private readonly Dictionary<string, SortedDictionary<int, SortedDictionary<int, TaggedData>>> data = new();
+            foreach (var property in other.data)
+            {
+                foreach (var tick in property.Value)
+                {
+                    foreach (var version in tick.Value)
+                    {
+                        // Using SetValue to ensure consistent storage and handling of AllCount
+                        SetValue(property.Key, tick.Key, version.Key, version.Value.Data, version.Value.Tags);
+                    }
+                }
+            }
+        }
+
+
+        // The main data storage, organized first by property name, then by tick, then by version.
+        internal Dictionary<string, SortedDictionary<int, SortedDictionary<int, TaggedData>>> data { get; set; } = new();
 
         // TODO: Should track count inside.
-        public int AllCount { get; protected set; }
+
+
+        public int Count(TagFilter filter = default)
+        {
+            int count = 0;
+
+            foreach (var propEntry in data)
+            {
+                foreach (var tickEntry in propEntry.Value)
+                {
+                    foreach (var versionEntry in tickEntry.Value)
+                    {
+                        if (MatchTags(versionEntry.Value, filter))
+                        {
+                            count++;
+                        }
+                    }
+                }
+            }
+
+            return count;
+        }
+
+
+
+        /// <summary> Count of all tracked elements across all properties, ticks, and versions. </summary>
+        public int AllCount { get; private set; }
 
         private static bool MatchTags(TaggedData data, TagFilter tagFilter)
         {
-            if (tagFilter == null || !tagFilter.Tags.Any())
+
+            if (tagFilter == null)
             {
                 return true;
-            }
-
-            if (data.Tags == null)
-            {
-                return false;
             }
 
             // Match only if all tags in the data should be included according to the tagFilter
@@ -43,9 +131,12 @@ namespace Tracking
         }
 
 
-        public IEnumerable<string> DistinctKeys 
+        /// <summary> Gets all distinct property keys present in the data. </summary>
+        public IEnumerable<string> AllDistinctKeys 
             => data.Keys;
 
+
+        /// <summary> Checks if any data exists that matches the given query. </summary>
         public bool Exists(TrackerRangeQuery trackerRangeQuery)
         {
             // Check if the property exists
@@ -75,9 +166,10 @@ namespace Tracking
 
 
 
-
+        /// <summary> Sets the value for a given property, tick, and version. </summary>
         public void SetValue(string propertyName, int tick, int version, object value, string[] tags)
         {
+            // Ensure the dictionaries are properly initialized for the given property and tick.
             if (!data.ContainsKey(propertyName))
             {
                 data[propertyName] = new SortedDictionary<int, SortedDictionary<int, TaggedData>>();
@@ -100,21 +192,87 @@ namespace Tracking
             versionDict[version] = new TaggedData(value, tags);
         }
 
+        /// <summary>
+        /// Removes all versions for a given property and tick.
+        /// </summary>
+        public void RemoveValue(string propertyName, int tick)
+        {
+            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            {
+                // Decrease the overall count by the number of versions for this tick
+                AllCount -= versionDict.Count;
+
+                tickDict.Remove(tick);
+
+                // If there are no more ticks left for this property, remove the property as well
+                if (tickDict.Count == 0)
+                {
+                    data.Remove(propertyName);
+                }
+            }
+        }
+
+
+
+        /// <summary> 
+        /// Removes the value for a given property, tick, and version. 
+        /// </summary>
+        public void RemoveSpecificValue(string propertyName, int tick, int version)
+        {
+            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict) && versionDict.ContainsKey(version))
+            {
+                versionDict.Remove(version);
+                AllCount--;
+
+                // If there are no more versions left for this tick, remove the tick as well
+                if (versionDict.Count == 0)
+                {
+                    tickDict.Remove(tick);
+                }
+
+                // If there are no more ticks left for this property, remove the property as well
+                if (tickDict.Count == 0)
+                {
+                    data.Remove(propertyName);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Removes all ticks and versions for a given property.
+        /// </summary>
+        public void RemoveAllPropertyValues(string propertyName)
+        {
+            if (data.TryGetValue(propertyName, out var tickDict))
+            {
+                // Decrease the overall count by the total number of versions across all ticks for this property
+                foreach (var versionDict in tickDict.Values)
+                {
+                    AllCount -= versionDict.Count;
+                }
+
+                data.Remove(propertyName);
+            }
+        }
+
+
         // TODO: Specific version, tick?
 
         #region Latest
 
+        /// <summary> Attempts to get the latest value for a given property and tick. </summary>
         public bool TryGetLatestValue(TrackerQuery query, out TrackerQueryResult result)
         {
             result = new TrackerQueryResult();
 
             if (data.TryGetValue(query.PropertyName, out var tickDict) && tickDict.TryGetValue(query.Tick, out var versionDict))
             {
+                // This will get all versions that match the provided tag filter, ordered in descending order (highest version number first)
                 var matchingVersions = versionDict
                     .Where(kv => MatchTags(kv.Value, query.Filter))  // Filter on tags
                     .OrderByDescending(kv => kv.Key);  // Highest version first
 
-                // If any values with matching tags are found, return the one with the highest version
+                // If any matching versions were found
                 if (matchingVersions.Any())
                 {
                     var highestVersion = matchingVersions.First();
@@ -300,6 +458,7 @@ namespace Tracking
             // If no values with matching tags are found after examining all ticks, return false
             return false;
         }
+
 
         #endregion
 

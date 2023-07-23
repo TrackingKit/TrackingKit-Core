@@ -17,7 +17,7 @@ namespace Sandbox
             bool pressed = Input.Pressed("attack1");
 
 
-            if (!Game.IsServer || !pressed)
+            if ( !pressed )
                 return;
 
             using (Prediction.Off())
@@ -33,11 +33,27 @@ namespace Sandbox
 
                 var tracker = TrackerSystem.Get(modelEnt);
 
-                modelEnt.Components.GetOrCreate<TrackingDisplacementEntityComponent>();
+                if(Game.IsServer)
+                    modelEnt.Components.GetOrCreate<TrackingDisplacementEntityComponent>();
+
+
+                if (Input.Pressed("reload"))
+                {
+                    var filter = new TagFilter();
+
+                    filter.DefaultFilterOption = FilterOption.Include;
+
+                    FileSystem.Data.WriteJson("wowzers.json", tracker.CopyData(filter: filter) ); // tracker.CopyData() 
+
+                }
             }
+
+
 
             base.Simulate();
         }
+
+
 
     }
 }

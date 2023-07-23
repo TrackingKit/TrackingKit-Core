@@ -21,11 +21,11 @@ namespace Tracking
         //    => Data.Count;
 
 
-        public IEnumerable<string> GetDistinctKeys
-            => Data.DistinctKeys;
+       // public IEnumerable<string> GetDistinctKeys
+       //   => Data.AllDistinctKeys;
 
-        public bool Exists(string propertyName)
-            => Data.DistinctKeys.Contains(propertyName);
+        //public bool Exists(string propertyName)
+        //    => Data.AllDistinctKeys.Contains(propertyName);
 
         /*
         public bool ExistsAtOrBefore(string propertyName, float second)

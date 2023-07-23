@@ -78,6 +78,7 @@ namespace Tracking
 
                     //DebugOverlay.ScreenText($"Total Values: {scope.Count()}", currentLine);
 
+                    /*
                     foreach(var key in scope.GetDistinctKeys())
                     {
                         currentLine++;
@@ -85,7 +86,7 @@ namespace Tracking
                         DebugOverlay.ScreenText($"Key: {key}", currentLine);
 
                     }
-
+                    */
                 }
             }
 

@@ -12,7 +12,7 @@ namespace Tracking
 {
     public partial class Tracker
     {
-        protected TrackerData Data { get; } = new();
+        protected TrackerData Data { get; private set; } = new();
 
         internal Tracker()
         {
@@ -31,13 +31,12 @@ namespace Tracking
         ~Tracker() => Event.Unregister(this);
 
         /// <summary> Rules for Adding and Deleteing data. </summary>
-        public TrackerRulesService Rules { get; } 
+        public TrackerRulesService Rules { get; private set; } 
 
         public bool Pause { get; set; }
 
 
         // Building
-
         public HashSet<string> CurrentBuildTags { get; } = new HashSet<string>();
 
 
