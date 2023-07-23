@@ -46,6 +46,16 @@ namespace Sandbox
                     FileSystem.Data.WriteJson("wowzers.json", tracker.CopyData(filter: filter) ); // tracker.CopyData() 
 
                 }
+
+
+                if (Input.Pressed("attack2"))
+                {
+                    var item = FileSystem.Data.ReadJson<TrackingPresistanceData>("wowzers.json");
+
+                    Log.Info(item.Data.Count(default));
+
+                }
+
             }
 
 

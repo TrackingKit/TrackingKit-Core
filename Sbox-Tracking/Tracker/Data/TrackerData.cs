@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace Tracking
@@ -15,6 +16,9 @@ namespace Tracking
     [JsonConverter(typeof(TrackerDataConverter))]
     public class TrackerData : ICloneable
     {
+        // The main data storage, organized first by property name, then by tick, then by version.
+        private Dictionary<string, SortedDictionary<int, SortedDictionary<int, TaggedData>>> data { get; set; } = new();
+
         public class TaggedData
         {
             public object Data { get; }
@@ -26,6 +30,21 @@ namespace Tracking
                 Tags = tags;
             }
         }
+
+        private static bool MatchTags(TaggedData data, TagFilter tagFilter)
+        {
+
+            if (tagFilter == null)
+            {
+                return true;
+            }
+
+            // Match only if all tags in the data should be included according to the tagFilter
+            return data.Tags.All(tag => tagFilter.ShouldInclude(tag));
+        }
+
+
+        #region IClonable / Clone
 
         public object Clone()
             => Clone(default);
@@ -62,7 +81,6 @@ namespace Tracking
                 }
             }
 
-            clone.AllCount = clone.data.Sum(propEntry => propEntry.Value.Sum(tickEntry => tickEntry.Value.Count));
 
             return clone;
         }
@@ -85,27 +103,50 @@ namespace Tracking
             }
         }
 
+        #endregion
 
-        // The main data storage, organized first by property name, then by tick, then by version.
-        internal Dictionary<string, SortedDictionary<int, SortedDictionary<int, TaggedData>>> data { get; set; } = new();
-
-        // TODO: Should track count inside.
-
-
-        public int Count(TagFilter filter = default)
+        // TODO: Should we make param in rangerquery not have propertyname
+        // as we make it optional here, but this seems confusing. But I might be overthikning this.
+        public int Count(TrackerRangeQuery trackerRangeQuery)
         {
             int count = 0;
 
-            foreach (var propEntry in data)
+            // If PropertyName is an empty string, count all matching elements
+            if (string.IsNullOrEmpty(trackerRangeQuery.PropertyName))
             {
-                foreach (var tickEntry in propEntry.Value)
+                foreach (var propEntry in data)
                 {
-                    foreach (var versionEntry in tickEntry.Value)
+                    count += CountFromPropertyEntry(propEntry.Value, trackerRangeQuery);
+                }
+            }
+            else
+            {
+                // If PropertyName is not an empty string, count matching elements only for that property
+                if (data.TryGetValue(trackerRangeQuery.PropertyName, out var tickDict))
+                {
+                    count = CountFromPropertyEntry(tickDict, trackerRangeQuery);
+                }
+            }
+
+            return count;
+        }
+
+        private int CountFromPropertyEntry(SortedDictionary<int, SortedDictionary<int, TaggedData>> tickDict, TrackerRangeQuery trackerRangeQuery)
+        {
+            int count = 0;
+
+            foreach (var tickEntry in tickDict)
+            {
+                if (tickEntry.Key < trackerRangeQuery.MinTick || tickEntry.Key > trackerRangeQuery.MaxTick)
+                {
+                    continue;
+                }
+
+                foreach (var versionEntry in tickEntry.Value)
+                {
+                    if (MatchTags(versionEntry.Value, trackerRangeQuery.Filter))  // I assume TaggedData has a property called Tags
                     {
-                        if (MatchTags(versionEntry.Value, filter))
-                        {
-                            count++;
-                        }
+                        count++;
                     }
                 }
             }
@@ -114,26 +155,6 @@ namespace Tracking
         }
 
 
-
-        /// <summary> Count of all tracked elements across all properties, ticks, and versions. </summary>
-        public int AllCount { get; private set; }
-
-        private static bool MatchTags(TaggedData data, TagFilter tagFilter)
-        {
-
-            if (tagFilter == null)
-            {
-                return true;
-            }
-
-            // Match only if all tags in the data should be included according to the tagFilter
-            return data.Tags.All(tag => tagFilter.ShouldInclude(tag));
-        }
-
-
-        /// <summary> Gets all distinct property keys present in the data. </summary>
-        public IEnumerable<string> AllDistinctKeys 
-            => data.Keys;
 
 
         /// <summary> Checks if any data exists that matches the given query. </summary>
@@ -184,13 +205,61 @@ namespace Tracking
 
             var versionDict = tickDict[tick];
 
-            if (!versionDict.ContainsKey(version)) // If the version does not exist yet, increment count
-            {
-                AllCount++;
-            }
-
             versionDict[version] = new TaggedData(value, tags);
         }
+
+
+        #region Get
+
+        public IEnumerable<string> GetProperties(TagFilter filter = default)
+        {
+            return data
+                .Where(kv => kv.Value.Any(tickKv => tickKv.Value.Any(versionKv => MatchTags(versionKv.Value, filter))))
+                .Select(kv => kv.Key);
+
+        }
+
+        public IEnumerable<int> GetTicks(string propertyName, TagFilter filter = default)
+        {
+            if (data.TryGetValue(propertyName, out var tickDict))
+            {
+                return tickDict
+                    .Where(tickKv => tickKv.Value.Any(versionKv => MatchTags(versionKv.Value, filter)))
+                    .Select(tickKv => tickKv.Key);
+            }
+
+            return Enumerable.Empty<int>(); // return an empty sequence if the property does not exist
+        }
+
+        public IEnumerable<int> GetVersions(string propertyName, int tick, TagFilter filter = default)
+        {
+            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            {
+                return versionDict
+                    .Where(versionKv => MatchTags(versionKv.Value, filter))
+                    .Select(versionKv => versionKv.Key);
+            }
+
+            return Enumerable.Empty<int>(); // return an empty sequence if the tick does not exist
+        }
+
+        public TaggedData GetTaggedData(string propertyName, int tick, int version, TagFilter filter = default)
+        {
+            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            {
+                if (versionDict.TryGetValue(version, out var taggedData) && MatchTags(taggedData, filter))
+                {
+                    return taggedData;
+                }
+            }
+
+            // If no matching TaggedData is found, return null
+            return null;
+        }
+
+        #endregion
+
+        #region Remove
 
         /// <summary>
         /// Removes all versions for a given property and tick.
@@ -199,9 +268,6 @@ namespace Tracking
         {
             if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
             {
-                // Decrease the overall count by the number of versions for this tick
-                AllCount -= versionDict.Count;
-
                 tickDict.Remove(tick);
 
                 // If there are no more ticks left for this property, remove the property as well
@@ -222,7 +288,6 @@ namespace Tracking
             if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict) && versionDict.ContainsKey(version))
             {
                 versionDict.Remove(version);
-                AllCount--;
 
                 // If there are no more versions left for this tick, remove the tick as well
                 if (versionDict.Count == 0)
@@ -245,20 +310,14 @@ namespace Tracking
         {
             if (data.TryGetValue(propertyName, out var tickDict))
             {
-                // Decrease the overall count by the total number of versions across all ticks for this property
-                foreach (var versionDict in tickDict.Values)
-                {
-                    AllCount -= versionDict.Count;
-                }
-
                 data.Remove(propertyName);
             }
         }
 
+        #endregion
 
-        // TODO: Specific version, tick?
 
-        #region Latest
+        #region TryGet Latest
 
         /// <summary> Attempts to get the latest value for a given property and tick. </summary>
         public bool TryGetLatestValue(TrackerQuery query, out TrackerQueryResult result)
@@ -368,7 +427,7 @@ namespace Tracking
 
         #endregion
 
-        #region Detailed
+        #region TryGet Detailed
 
         public bool TryGetDetailedValue(TrackerQuery query, out TrackerDetailedQueryResult result)
         {
@@ -458,6 +517,8 @@ namespace Tracking
             // If no values with matching tags are found after examining all ticks, return false
             return false;
         }
+
+
 
 
         #endregion

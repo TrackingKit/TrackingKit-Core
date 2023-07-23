@@ -32,11 +32,16 @@ namespace Tracking
         #region Count, DistinctKeys and Exists methods
 
         //[Obsolete("This doesnt consider scope.")]
-        //public int Count() 
-       //    => Data.Count;
+        public int Count()
+            => Data.Count(new TrackerRangeQuery()
+            {
+                MinTick = ScopedSettings.MinTick,
+                MaxTick = ScopedSettings.MaxTick,
+                Filter = ScopedSettings.Filter
+            });
 
 
-       // [Obsolete("This doesnt consider scope.")]
+        // [Obsolete("This doesnt consider scope.")]
         //public IEnumerable<string> GetDistinctKeys()
         //    => Data.DistinctKeys;
 

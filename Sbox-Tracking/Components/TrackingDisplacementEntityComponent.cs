@@ -36,7 +36,7 @@ namespace Sandbox.Components
 
             if(Entity is ModelEntity targetModelEnt && DisplacedEntity is ModelEntity displacementModelEntity)
             {
-                displacementModelEntity.Model = targetModelEnt.Model;
+                displacementModelEntity.Model = (targetModelEnt.Model);
                 displacementModelEntity.RenderColor = new Color(0, 0, 100, 0.6f);
             }
 

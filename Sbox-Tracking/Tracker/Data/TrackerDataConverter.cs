@@ -41,11 +41,7 @@ namespace Tracking
                             break;
                         }
 
-                        // At this point, reader should be positioned at the property name (i.e., key of outer dictionary)
                         string propertyName = reader.GetString();
-
-                        // Create inner dictionary for the current property
-                        SortedDictionary<int, SortedDictionary<int, TrackerData.TaggedData>> tickDict = new SortedDictionary<int, SortedDictionary<int, TrackerData.TaggedData>>();
 
                         if (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
                         {
@@ -56,18 +52,44 @@ namespace Tracking
                                     break;
                                 }
 
-                                // Similarly, read tick and version dictionaries and populate `tickDict`
-                                // This will involve further nested reading which can be done in a similar manner
+                                string tickString = reader.GetString();
+                                if (!Int32.TryParse(tickString, out int tick))
+                                {
+                                    throw new JsonException("Expected tick to be an integer");
+                                }
+
+                                if (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+                                {
+                                    while (reader.Read())
+                                    {
+                                        if (reader.TokenType == JsonTokenType.EndObject)
+                                        {
+                                            break;
+                                        }
+
+                                        string versionString = reader.GetString();
+                                        if (!Int32.TryParse(versionString, out int version))
+                                        {
+                                            throw new JsonException("Expected version to be an integer");
+                                        }
+
+                                        if (reader.Read() && reader.TokenType == JsonTokenType.StartObject)
+                                        {
+                                            TrackerData.TaggedData taggedData = JsonSerializer.Deserialize<TrackerData.TaggedData>(ref reader, options);
+                                            trackerData.SetValue(propertyName, tick, version, taggedData.Data, taggedData.Tags);
+                                        }
+                                    }
+                                }
                             }
                         }
-
-                        trackerData.data[propertyName] = tickDict;
                     }
                 }
             }
 
             throw new JsonException();
         }
+
+
 
         public override void Write(Utf8JsonWriter writer, TrackerData value, JsonSerializerOptions options)
         {
@@ -76,21 +98,23 @@ namespace Tracking
             writer.WritePropertyName("Data");
             writer.WriteStartObject();
 
-            foreach (var propertyEntry in value.data)
+            foreach (string property in value.GetProperties())
             {
-                writer.WritePropertyName(propertyEntry.Key);
+                writer.WritePropertyName(property);
                 writer.WriteStartObject();
 
-                foreach (var tickEntry in propertyEntry.Value)
+                foreach (int tick in value.GetTicks(property))
                 {
-                    writer.WritePropertyName(tickEntry.Key.ToString());
+                    writer.WritePropertyName(tick.ToString());
                     writer.WriteStartObject();
 
-                    foreach (var versionEntry in tickEntry.Value)
+
+
+                    foreach (int version in value.GetVersions(property, tick))
                     {
-                        writer.WritePropertyName(versionEntry.Key.ToString());
-                        // Assuming TaggedData can be serialized directly
-                        JsonSerializer.Serialize(writer, versionEntry.Value, options);
+                        writer.WritePropertyName(version.ToString());
+                        // This will only work if the class TaggedData has a suitable ToString() method or if it can be automatically serialized
+                        JsonSerializer.Serialize(writer, value.GetTaggedData(property, tick, version), options);
                     }
 
                     writer.WriteEndObject();
