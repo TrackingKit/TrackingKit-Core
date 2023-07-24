@@ -7,14 +7,16 @@ using Utility;
 
 namespace Tracking.Rules
 {
-    public enum Filter
-    {
-        Whitelisted,
-        Blacklisted,
-    }
 
+    /// <summary> Allows to filter what proerties are whitelisted, blacklisted etc at the time. </summary>
     public partial class AllowRule : TrackerRule
     {
+        public enum Filter
+        {
+            Whitelisted,
+            Blacklisted,
+        }
+
         protected Dictionary<string, Filter> Properties { get; set; } = new Dictionary<string, Filter>();
 
 

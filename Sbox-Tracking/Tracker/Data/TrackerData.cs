@@ -29,7 +29,7 @@ namespace Tracking
         }
 
         // The main data storage, organized first by property name, then by tick, then by version.
-        private Dictionary<string, SortedDictionary<int, SortedDictionary<int, TaggedData>>> data { get; set; } = new();
+        private Dictionary<string, SortedDictionary<int, SortedDictionary<int, TaggedData>>> Data { get; set; } = new();
 
 
 
@@ -51,12 +51,12 @@ namespace Tracking
         public object Clone()
             => Clone(default);
 
-        public TrackerData Clone(TagFilter filter = default)
+        public TrackerData Clone(TrackerRangeQuery query)
         {
             var clone = new TrackerData();
 
 
-            foreach (var propEntry in data)
+            foreach (var propEntry in Data)
             {
                 var tickDict = new SortedDictionary<int, SortedDictionary<int, TaggedData>>();
 
@@ -66,7 +66,7 @@ namespace Tracking
 
                     foreach (var versionEntry in tickEntry.Value)
                     {
-                        if (MatchTags(versionEntry.Value, filter))
+                        if (MatchTags(versionEntry.Value, query.Filter))
                         {
                             versionDict[versionEntry.Key] = new TaggedData(versionEntry.Value.Data, versionEntry.Value.Tags.ToArray());
                         }
@@ -80,7 +80,7 @@ namespace Tracking
 
                 if (tickDict.Count > 0) // If any ticks pass the filter for this property
                 {
-                    clone.data[propEntry.Key] = tickDict;
+                    clone.Data[propEntry.Key] = tickDict;
                 }
             }
 
@@ -93,7 +93,7 @@ namespace Tracking
         {
             if (other == null) return;
 
-            foreach (var property in other.data)
+            foreach (var property in other.Data)
             {
                 foreach (var tick in property.Value)
                 {
@@ -101,6 +101,8 @@ namespace Tracking
                     {
                         // Using SetValue to ensure consistent storage and handling of AllCount
                         SetValue(property.Key, tick.Key, version.Key, version.Value.Data, version.Value.Tags);
+
+                        // TODO: maybe overwrite optional bool is setvalue that is true by def?
                     }
                 }
             }
@@ -117,9 +119,9 @@ namespace Tracking
             int count = 0;
 
             // If PropertyName is an empty string, count all matching elements
-            if (string.IsNullOrEmpty(trackerRangeQuery.PropertyName))
+            if ( string.IsNullOrEmpty(trackerRangeQuery.PropertyName))
             {
-                foreach (var propEntry in data)
+                foreach (var propEntry in Data)
                 {
                     count += CountFromPropertyEntry(propEntry.Value, trackerRangeQuery);
                 }
@@ -127,7 +129,7 @@ namespace Tracking
             else
             {
                 // If PropertyName is not an empty string, count matching elements only for that property
-                if (data.TryGetValue(trackerRangeQuery.PropertyName, out var tickDict))
+                if (Data.TryGetValue(trackerRangeQuery.PropertyName, out var tickDict))
                 {
                     count = CountFromPropertyEntry(tickDict, trackerRangeQuery);
                 }
@@ -168,7 +170,7 @@ namespace Tracking
         public bool Exists(TrackerRangeQuery trackerRangeQuery)
         {
             // Check if the property exists
-            if (data.TryGetValue(trackerRangeQuery.PropertyName, out var tickDict))
+            if (Data.TryGetValue(trackerRangeQuery.PropertyName, out var tickDict))
             {
                 // Check if any of the ticks for this property falls within the given range
                 foreach (var tickKv in tickDict)
@@ -198,12 +200,12 @@ namespace Tracking
         public void SetValue(string propertyName, int tick, int version, object value, string[] tags)
         {
             // Ensure the dictionaries are properly initialized for the given property and tick.
-            if (!data.ContainsKey(propertyName))
+            if (!Data.ContainsKey(propertyName))
             {
-                data[propertyName] = new SortedDictionary<int, SortedDictionary<int, TaggedData>>();
+                Data[propertyName] = new SortedDictionary<int, SortedDictionary<int, TaggedData>>();
             }
 
-            var tickDict = data[propertyName];
+            var tickDict = Data[propertyName];
 
             if (!tickDict.ContainsKey(tick))
             {
@@ -220,7 +222,7 @@ namespace Tracking
 
         public IEnumerable<string> GetProperties(TagFilter filter = default)
         {
-            return data
+            return Data
                 .Where(kv => kv.Value.Any(tickKv => tickKv.Value.Any(versionKv => MatchTags(versionKv.Value, filter))))
                 .Select(kv => kv.Key);
 
@@ -228,7 +230,7 @@ namespace Tracking
 
         public IEnumerable<int> GetTicks(string propertyName, TagFilter filter = default)
         {
-            if (data.TryGetValue(propertyName, out var tickDict))
+            if (Data.TryGetValue(propertyName, out var tickDict))
             {
                 return tickDict
                     .Where(tickKv => tickKv.Value.Any(versionKv => MatchTags(versionKv.Value, filter)))
@@ -240,7 +242,7 @@ namespace Tracking
 
         public IEnumerable<int> GetVersions(string propertyName, int tick, TagFilter filter = default)
         {
-            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            if (Data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
             {
                 return versionDict
                     .Where(versionKv => MatchTags(versionKv.Value, filter))
@@ -252,7 +254,7 @@ namespace Tracking
 
         public TaggedData GetTaggedData(string propertyName, int tick, int version, TagFilter filter = default)
         {
-            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            if (Data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
             {
                 if (versionDict.TryGetValue(version, out var taggedData) && MatchTags(taggedData, filter))
                 {
@@ -273,14 +275,14 @@ namespace Tracking
         /// </summary>
         public void RemoveValue(string propertyName, int tick)
         {
-            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
+            if (Data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict))
             {
                 tickDict.Remove(tick);
 
                 // If there are no more ticks left for this property, remove the property as well
                 if (tickDict.Count == 0)
                 {
-                    data.Remove(propertyName);
+                    Data.Remove(propertyName);
                 }
             }
         }
@@ -292,7 +294,7 @@ namespace Tracking
         /// </summary>
         public void RemoveSpecificValue(string propertyName, int tick, int version)
         {
-            if (data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict) && versionDict.ContainsKey(version))
+            if (Data.TryGetValue(propertyName, out var tickDict) && tickDict.TryGetValue(tick, out var versionDict) && versionDict.ContainsKey(version))
             {
                 versionDict.Remove(version);
 
@@ -305,7 +307,7 @@ namespace Tracking
                 // If there are no more ticks left for this property, remove the property as well
                 if (tickDict.Count == 0)
                 {
-                    data.Remove(propertyName);
+                    Data.Remove(propertyName);
                 }
             }
         }
@@ -315,9 +317,9 @@ namespace Tracking
         /// </summary>
         public void RemoveAllPropertyValues(string propertyName)
         {
-            if (data.TryGetValue(propertyName, out var tickDict))
+            if (Data.TryGetValue(propertyName, out var tickDict))
             {
-                data.Remove(propertyName);
+                Data.Remove(propertyName);
             }
         }
 
@@ -331,7 +333,7 @@ namespace Tracking
 
         public bool TryGetLatestValueAtNextAvailableTick(TrackerRangeQuery query, out TrackerQueryResult result)
         {
-            if (data.TryGetValue(query.PropertyName, out var tickDict))
+            if (Data.TryGetValue(query.PropertyName, out var tickDict))
             {
                 var nextTicks = tickDict.Keys.Where(t => t > query.MinTick && t <= query.MaxTick).OrderBy(t => t); // Ensure ticks are in ascending order and within bounds
                 return TryGetLatestValueHelper(query.PropertyName, query.Filter, nextTicks, out result);
@@ -343,7 +345,7 @@ namespace Tracking
 
         public bool TryGetLatestValueAtPreviousAvailableTick(TrackerRangeQuery query, out TrackerQueryResult result)
         {
-            if (data.TryGetValue(query.PropertyName, out var tickDict))
+            if (Data.TryGetValue(query.PropertyName, out var tickDict))
             {
                 var previousTicks = tickDict.Keys.Where(t => t < query.MaxTick && t >= query.MinTick).OrderByDescending(t => t); // Ensure ticks are in descending order and within bounds
                 return TryGetLatestValueHelper(query.PropertyName, query.Filter, previousTicks, out result);
@@ -357,7 +359,7 @@ namespace Tracking
         {
             result = new TrackerQueryResult();
 
-            if (data.TryGetValue(propertyName, out var tickDict))
+            if (Data.TryGetValue(propertyName, out var tickDict))
             {
                 foreach (var tick in ticks)
                 {
@@ -399,7 +401,7 @@ namespace Tracking
 
         public bool TryGetDetailedValuesAtNextAvailableTick(TrackerRangeQuery query, out TrackerDetailedQueryResult result)
         {
-            if (data.TryGetValue(query.PropertyName, out var tickDict))
+            if (Data.TryGetValue(query.PropertyName, out var tickDict))
             {
                 var nextTicks = tickDict.Keys.Where(t => t > query.MinTick && t <= query.MaxTick).OrderBy(t => t); // Ensure ticks are in ascending order and within bounds
                 return TryGetDetailedValues(query.PropertyName, query.Filter, nextTicks, out result);
@@ -411,7 +413,7 @@ namespace Tracking
 
         public bool TryGetDetailedValuesAtPreviousAvailableTick(TrackerRangeQuery query, out TrackerDetailedQueryResult result)
         {
-            if (data.TryGetValue(query.PropertyName, out var tickDict))
+            if (Data.TryGetValue(query.PropertyName, out var tickDict))
             {
                 var previousTicks = tickDict.Keys.Where(t => t < query.MaxTick && t >= query.MinTick).OrderByDescending(t => t); // Ensure ticks are in descending order and within bounds
                 return TryGetDetailedValues(query.PropertyName, query.Filter, previousTicks, out result);
@@ -425,7 +427,7 @@ namespace Tracking
         {
             result = new TrackerDetailedQueryResult();
 
-            if (data.TryGetValue(propertyName, out var tickDict))
+            if (Data.TryGetValue(propertyName, out var tickDict))
             {
                 foreach (var tick in ticks)
                 {

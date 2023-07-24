@@ -24,7 +24,7 @@ namespace Tracking.RulesService
         }
     }
 
-    public partial class TrackerRulesService
+    public partial class TrackerRulesService : ICloneable
     {
         protected TrackerData Data { get; }
 
@@ -91,5 +91,24 @@ namespace Tracking.RulesService
         {
             return Rules.OfType<T>();
         }
+
+
+        internal void Add<T>(T obj)
+            where T : TrackerRule
+        {
+            Rules.Add(obj);
+        }
+
+        public object Clone()
+        {
+            TrackerRulesService clonedTrackerRulesService = new(Data);
+
+            // Deep copy.
+            clonedTrackerRulesService.Rules = new(Rules);
+
+
+            return clonedTrackerRulesService;
+        }
+
     }
 }

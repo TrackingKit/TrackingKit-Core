@@ -29,7 +29,13 @@ namespace Tracking
     {
         public TrackingPresistanceData CopyData(bool saveRules = false, TagFilter filter = default)
         {
-            var dataCloned = Data.Clone(filter);
+            var copy = new TrackerRangeQuery()
+            {
+                Filter = filter,
+            };
+
+
+            var dataCloned = Data.Clone(copy);
 
 
 

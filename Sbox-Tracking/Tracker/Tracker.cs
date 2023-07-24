@@ -33,6 +33,8 @@ namespace Tracking
         /// <summary> Rules for Adding and Deleteing data. </summary>
         public TrackerRulesService Rules { get; private set; } 
 
+
+        /// <summary> Ability to pause taking in values. </summary>
         public bool Pause { get; set; }
 
 
@@ -155,21 +157,11 @@ namespace Tracking
         public void Add(string propertyName, object value, params string[] idents)
             => Add(propertyName, value, Time.Tick, idents);
 
-        [Obsolete("Needs implementing")]
         public void Remove(string propertyName, int tick)
-        {
-            // Will remove all versions on that one.
-        }
+            => Data.RemoveValue(propertyName, tick);
 
-
-        [Obsolete("Needs implementing")]
         public void RemovSpecificVersion(string propertyName, int tick, int version)
-        {
-            // Remove speicifc version.
-
-
-            //Data.RemoveValue(trackerKey);
-        }
+            => Data.RemoveSpecificValue(propertyName, tick, version);
 
 
     }
