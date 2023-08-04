@@ -62,11 +62,11 @@ namespace Tracking
 
 
 
-        public (double Second, T Data) GetOrPrevious<T>(string propertyName, int tick)
-            => GetOrPreviousInternal<T>(propertyName, tick, true);
+        public (double Second, T Data) GetOrPrevious<T>(string propertyName, double second)
+            => GetOrPreviousInternal<T>(propertyName, second, true);
 
-        public (double Second, T Data) GetOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
-            => GetOrPreviousInternal<T>(propertyName, tick, false, defaultValue);
+        public (double Second, T Data) GetOrPreviousOrDefault<T>(string propertyName, double second, T defaultValue)
+            => GetOrPreviousInternal<T>(propertyName, second, false, defaultValue);
 
         #endregion
 
@@ -83,14 +83,11 @@ namespace Tracking
             return (second, defaultValue);
         }
 
+        public (double Second, T Data) GetOrNext<T>(string propertyName, double second)
+            => GetOrNextInternal<T>(propertyName, second, logError: true);
 
-
-
-        public (double Second, T Data) GetOrNext<T>(string propertyName, int tick)
-            => GetOrNextInternal<T>(propertyName, tick, logError: true);
-
-        public (double Second, T Data) GetOrNextOrDefault<T>(string propertyName, int tick, T defaultValue)
-            => GetOrNextInternal<T>(propertyName, tick, logError: false, defaultValue);
+        public (double Second, T Data) GetOrNextOrDefault<T>(string propertyName, double second, T defaultValue)
+            => GetOrNextInternal<T>(propertyName, second, logError: false, defaultValue);
 
         #endregion
 
@@ -108,11 +105,11 @@ namespace Tracking
         }
 
 
-        public IEnumerable<(int Version, T Value)> GetDetailed<T>(string propertyName, int tick)
-            => GetDetailedInternal<T>(propertyName, tick, logError: true);
+        public IEnumerable<(int Version, T Value)> GetDetailed<T>(string propertyName, double second)
+            => GetDetailedInternal<T>(propertyName, second, logError: true);
 
-        public IEnumerable<(int Version, T Value)> GetDetailedOrDefault<T>(string propertyName, int tick, IEnumerable<(int Version, T Value)> defaultValue)
-            => GetDetailedInternal<T>(propertyName, tick, logError: false, defaultValue);
+        public IEnumerable<(int Version, T Value)> GetDetailedOrDefault<T>(string propertyName, double second, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedInternal<T>(propertyName, second, logError: false, defaultValue);
 
 
         #endregion
@@ -131,11 +128,11 @@ namespace Tracking
 
 
 
-        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPrevious<T>(string propertyName, int tick)
-            => GetDetailedOrPreviousInternal<T>(propertyName, tick, logError: true);
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPrevious<T>(string propertyName, double second)
+            => GetDetailedOrPreviousInternal<T>(propertyName, second, logError: true);
 
-        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPreviousOrDefault<T>(string propertyName, int tick, IEnumerable<(int Version, T Value)> defaultValue)
-            => GetDetailedOrPreviousInternal<T>(propertyName, tick, logError: false, defaultValue);
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPreviousOrDefault<T>(string propertyName, double second, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedOrPreviousInternal<T>(propertyName, second, logError: false, defaultValue);
 
         #endregion
 
@@ -152,11 +149,11 @@ namespace Tracking
             return (second, defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
         }
 
-        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNext<T>(string propertyName, int tick)
-            => GetDetailedOrNextInternal<T>(propertyName, tick, logError: true);
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNext<T>(string propertyName, double second)
+            => GetDetailedOrNextInternal<T>(propertyName, second, logError: true);
 
-        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNextOrDefault<T>(string propertyName, int tick, IEnumerable<(int Version, T Value)> defaultValue)
-            => GetDetailedOrNextInternal<T>(propertyName, tick, logError: false, defaultValue);
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNextOrDefault<T>(string propertyName, double second, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedOrNextInternal<T>(propertyName, second, logError: false, defaultValue);
 
         #endregion
 

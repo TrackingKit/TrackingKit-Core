@@ -29,15 +29,17 @@ namespace Tracking
 
         public static int SecondToTick(double second)
         {
-            // Check if the exact second value exists
-            if (Seconds.TryGetValue(second, out int exactTick))
+            double currentTime = Time.Now;
+
+            // If very close.
+            if(Math.Abs(currentTime - second) < 0.1)
             {
-                return exactTick;
+                return Time.Tick;
             }
 
             // Get two closest seconds
-            var lowerSeconds = Seconds.Where(pair => pair.Key < second);
-            var upperSeconds = Seconds.Where(pair => pair.Key > second);
+            var lowerSeconds = Seconds.Where(pair => pair.Key < second).ToList();
+            var upperSeconds = Seconds.Where(pair => pair.Key > second).ToList();
 
             if (!lowerSeconds.Any() || !upperSeconds.Any())
             {
@@ -54,6 +56,11 @@ namespace Tracking
             // Calculate the difference in seconds between the two closest seconds.
             double secondSpan = upperClosestSecond.Key - lowerClosestSecond.Key;
 
+            // Check for zero secondSpan to avoid division by zero
+            if (secondSpan == 0)
+            {
+                return lowerClosestSecond.Value; // or upperClosestSecond.Value, they should be the same
+            }
 
             // Calculate the ratio of how far the input second is between the two closest seconds.
             double ratio = (second - lowerClosestSecond.Key) / secondSpan;

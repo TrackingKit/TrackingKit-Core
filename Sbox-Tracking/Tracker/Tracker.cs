@@ -58,9 +58,6 @@ namespace Tracking
             => idents?.ToList().ForEach(ident => CurrentBuildTags.Add(ident));
 
 
-
-
-
         [GameEvent.Tick.Server]
         protected void Tick()
         {
