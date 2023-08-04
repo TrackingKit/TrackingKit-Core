@@ -6,194 +6,160 @@ namespace Tracking
 {
     public partial class ScopedSecondsTracker : IDisposable
     {
-        private TrackerStorage Data { get; }
-        private ScopedSecondSettings ScopedSettings { get; }
+        private ScopedSecondsTrackingHelper DataHelper { get; }
 
         internal ScopedSecondsTracker(TrackerStorage data, ScopedSecondSettings scopedSettings)
         {
-            Data = data;
-            ScopedSettings = scopedSettings;
+            DataHelper = new(data, scopedSettings);
         }
 
 
+        public int Count()
+            => DataHelper.Count();
 
-        //public int Count()
-        //    => Data.Count;
+        public bool Exists()
+            => DataHelper.Exists();
+
+        public bool Exists(string propertyName)
+            => DataHelper.PropertyExists(propertyName);
 
 
-       // public IEnumerable<string> GetDistinctKeys
-       //   => Data.AllDistinctKeys;
+        #region Get methods
 
-        //public bool Exists(string propertyName)
-        //    => Data.AllDistinctKeys.Contains(propertyName);
-
-        /*
-        public bool ExistsAtOrBefore(string propertyName, float second)
+        private T GetInternal<T>(string propertyName, double second, bool logError, T defaultValue = default)
         {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            return query.Any();
-        }
-
-        public bool ExistsInRange(string propertyName, float minSecond, float maxSecond)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(minSecond), TimeUtility.SecondToTick(maxSecond)), ScopedSettings.Tags);
-            return query.Any();
-        }
-
-        public T Get<T>(string propertyName, float second)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any())
+            if (DataHelper.TryGetTypedLatestValueAtSecond<T>(propertyName, second, out var result, logError: logError))
             {
-                Log.Error($"No valid found for {propertyName}, {second}");
-                return default;
+                return result;
             }
 
-            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
-            return (T)itemToSelect.Value;
+            return defaultValue;
         }
 
-        public T GetOrDefault<T>(string propertyName, float second, T defaultValue)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
 
-            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
-            return (T)itemToSelect.Value;
-        }
+        public T Get<T>(string propertyName, double second)
+            => GetInternal<T>(propertyName, second, logError: true);
 
-        public T GetOrPrevious<T>(string propertyName, float second)
+        public T GetOrDefault<T>(string propertyName, double second, T defaultValue)
+            => GetInternal<T>(propertyName, second, logError: false, defaultValue);
+
+
+        #endregion
+
+        #region GetOrPrevious methods
+
+        private (double Second, T Data) GetOrPreviousInternal<T>(string propertyName, double second, bool logError, T defaultValue = default)
         {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any())
+            // Try to get the latest value before or at that tick
+            if (DataHelper.TryGetTypedLatestValueAtOrPreviousSecond(propertyName, second, out var secondValue, out T value, logError: logError))
             {
-                Log.Error("No values found of that type");
-                return default;
+                return (secondValue, value);
             }
 
-            query = query.OrderByDescending(pair => pair.Key.Tick)
-                .ThenByDescending(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
+            return (second, defaultValue);
         }
 
-        public T GetOrPreviousOrDefault<T>(string propertyName, float second, T defaultValue)
+
+
+
+        public (double Second, T Data) GetOrPrevious<T>(string propertyName, int tick)
+            => GetOrPreviousInternal<T>(propertyName, tick, true);
+
+        public (double Second, T Data) GetOrPreviousOrDefault<T>(string propertyName, int tick, T defaultValue)
+            => GetOrPreviousInternal<T>(propertyName, tick, false, defaultValue);
+
+        #endregion
+
+        #region GetOrNext methods
+
+        private (double Second, T Data) GetOrNextInternal<T>(string propertyName, double second, bool logError, T defaultValue = default)
         {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
-
-            query = query.OrderByDescending(pair => pair.Key.Tick)
-                .ThenByDescending(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
-        }
-
-        public IEnumerable<T> GetDetailed<T>(string propertyName, float second)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any())
+            // Try to get the latest value before or at that tick
+            if (DataHelper.TryGetTypedLatestValueAtOrNextSecond(propertyName, second, out var secondValue, out T value, logError: logError))
             {
-                Log.Error("Failed to find any values");
-                return default;
+                return (secondValue, value);
             }
 
-            query = query.OrderByDescending(x => x.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
+            return (second, defaultValue);
         }
 
-        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, float second, IEnumerable<T> defaultValue)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
 
-            query = query.OrderByDescending(x => x.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
-        }
 
-        public IEnumerable<T> GetDetailedOrPrevious<T>(string propertyName, float second)
+
+        public (double Second, T Data) GetOrNext<T>(string propertyName, int tick)
+            => GetOrNextInternal<T>(propertyName, tick, logError: true);
+
+        public (double Second, T Data) GetOrNextOrDefault<T>(string propertyName, int tick, T defaultValue)
+            => GetOrNextInternal<T>(propertyName, tick, logError: false, defaultValue);
+
+        #endregion
+
+
+        #region GetDetailed methods
+
+        private IEnumerable<(int Version, T Value)> GetDetailedInternal<T>(string propertyName, double second, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any())
+            if (DataHelper.TryGetTypedDetailedValueAtSecond<T>(propertyName, second, out var value, logError: logError))
             {
-                Log.Error("No values found");
-                return default;
+                return value;
             }
 
-            query = query.OrderByDescending(pair => pair.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
+            return (defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
         }
 
-        public IEnumerable<T> GetDetailedOrPreviousOrDefault<T>(string propertyName, float second, IEnumerable<T> defaultValue)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(ScopedSettings.MinSecond), TimeUtility.SecondToTick(second)), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
 
-            query = query.OrderByDescending(pair => pair.Key.Version);
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
-        }
+        public IEnumerable<(int Version, T Value)> GetDetailed<T>(string propertyName, int tick)
+            => GetDetailedInternal<T>(propertyName, tick, logError: true);
 
-        public T GetOrNext<T>(string propertyName, float second)
+        public IEnumerable<(int Version, T Value)> GetDetailedOrDefault<T>(string propertyName, int tick, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedInternal<T>(propertyName, tick, logError: false, defaultValue);
+
+
+        #endregion
+
+        #region GetDetailedOrPrevious methods
+
+        private (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPreviousInternal<T>(string propertyName, double second, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(ScopedSettings.MaxSecond)), ScopedSettings.Tags);
-            if (!query.Any())
+            if (DataHelper.TryGetTypedDetailedValuesAtOrPreviousSecond<T>(propertyName, second, out var secondResult, out var value, logError: logError))
             {
-                Log.Error("No values found of that type");
-                return default;
+                return (secondResult, value);
             }
 
-            query = query.OrderBy(pair => pair.Key.Tick)
-                .ThenBy(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
+            return (second, defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
         }
 
-        public T GetOrNextOrDefault<T>(string propertyName, float second, T defaultValue)
+
+
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPrevious<T>(string propertyName, int tick)
+            => GetDetailedOrPreviousInternal<T>(propertyName, tick, logError: true);
+
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPreviousOrDefault<T>(string propertyName, int tick, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedOrPreviousInternal<T>(propertyName, tick, logError: false, defaultValue);
+
+        #endregion
+
+
+        #region GetDetailedOrNext methods
+
+        private (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNextInternal<T>(string propertyName, double second, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(ScopedSettings.MaxSecond)), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
-
-            query = query.OrderBy(pair => pair.Key.Tick)
-                .ThenBy(pair => pair.Key.Version);
-
-            var itemToSelect = query.First();
-            return (T)itemToSelect.Value;
-        }
-
-        public IEnumerable<T> GetDetailedOrNext<T>(string propertyName, float second)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(ScopedSettings.MaxSecond)), ScopedSettings.Tags);
-            if (!query.Any())
+            if (DataHelper.TryGetTypedDetailedValuesAtOrNextSecond<T>(propertyName, second, out var timeResult, out var value, logError: logError))
             {
-                Log.Error("No values found");
-                return default;
+                return (timeResult, value);
             }
 
-            query = query.OrderBy(pair => pair.Key.Tick)
-                         .ThenBy(pair => pair.Key.Version);
-
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
+            return (second, defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
         }
 
-        public IEnumerable<T> GetDetailedOrNextOrDefault<T>(string propertyName, float second, IEnumerable<T> defaultValue)
-        {
-            var query = Data.Query(propertyName, (TimeUtility.SecondToTick(second), TimeUtility.SecondToTick(ScopedSettings.MaxSecond)), ScopedSettings.Tags);
-            if (!query.Any()) return defaultValue;
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNext<T>(string propertyName, int tick)
+            => GetDetailedOrNextInternal<T>(propertyName, tick, logError: true);
 
-            query = query.OrderBy(pair => pair.Key.Tick)
-                         .ThenBy(pair => pair.Key.Version);
+        public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNextOrDefault<T>(string propertyName, int tick, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedOrNextInternal<T>(propertyName, tick, logError: false, defaultValue);
 
-            var itemsToSelect = query.Select(x => x.Value);
-            return (IEnumerable<T>)itemsToSelect;
-        }
-        */
+        #endregion
+
 
         public void Dispose()
         {

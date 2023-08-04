@@ -7,14 +7,32 @@ using System.Threading.Tasks;
 
 namespace Tracking
 {
+    /// <summary>
+    /// The ScopedTrackingHelper class provides functionalities for tracking specific properties within a scoped context.
+    /// </summary>
+    /// <remarks>
+    /// <para title="Raw Methods">
+    /// Raw methods perform tracking without considering the scoped context settings. They deal directly with the raw data,
+    /// ignoring any filters, modifications, or customizations defined by the ScopedTickSettings. This enables direct and
+    /// unmodified access to the tracking data, providing a low-level view of the information.
+    /// </para>
+    /// <para title="Normal Methods">
+    /// In contrast, normal methods consider the ScopedTickSettings in their operations. They take into account the current
+    /// context, applying any rules, filters, or transformations defined within the settings. This leads to a more controlled
+    /// and customized view of the tracking data, allowing for tailored interactions within the specific scope.
+    /// </para>
+    /// <para title="Conclusion">
+    /// Together, these two types of methods provide a flexible framework for interacting with tracking data, accommodating
+    /// both unfiltered access and customized, context-aware operations.
+    /// </para>
+    /// </remarks>
     internal class ScopedTrackingHelper : IValid
     {
         public bool IsValid => Storage == null;
 
 
-        private readonly TrackerStorage Storage;
+        protected readonly TrackerStorage Storage;
 
-        private readonly IScopedTickSettings Settings;
 
 
         internal ScopedTrackingHelper(TrackerStorage storageData)
@@ -23,12 +41,6 @@ namespace Tracking
         }
 
 
-        internal ScopedTrackingHelper(TrackerStorage storageData, IScopedTickSettings scopedTickSettings)
-        {
-            Storage = storageData;
-            Settings = scopedTickSettings;
-
-        }
 
 
 
@@ -37,7 +49,6 @@ namespace Tracking
 
         // TODO: Some count cache mechanism?
 
-        #region Count and RawCount
 
         protected int RawCount(int minTick, int maxTick)
         {
@@ -60,12 +71,8 @@ namespace Tracking
             return 0;
         }
 
-        public int Count()
-        {
-            return RawCount(Settings.MinTick, Settings.MaxTick);
-        }
+        
 
-        #endregion
 
         #region Exists
 
@@ -83,15 +90,7 @@ namespace Tracking
             return Storage.TryGetValue(out var result, minTick: minTick, maxTick: maxTick, stopCondition: stopCondition);
         }
 
-        public bool PropertyExists(string propertyName)
-        {
-            return RawPropertyExists(propertyName, Settings.MinTick, Settings.MaxTick);
-        }
 
-        public bool Exists()
-        {
-            return RawExists(Settings.MinTick, Settings.MaxTick);
-        }
 
 
         #endregion
@@ -105,14 +104,11 @@ namespace Tracking
 
         // TODO Count one? check hash if need to do again etc
 
-        protected bool TryGetRawLatestValueAtTick(string propertyName, ref int tick, out (int Version, TrackerMetaData Data)? output)
+        protected bool TryGetRawLatestValueAtTick(string propertyName, int tick, out (int Version, TrackerMetaData Data)? output, IReadOnlyTagFilter filter)
         {
-            Settings?.ClampAndWarn(ref tick);
-
-
             if (Storage.TryGetPropertyValue(
                 propertyName, out var value, minTick: tick, maxTick: tick,
-                shouldInclude: x => (Settings?.Filter?.ShouldIncludes(x.Tags) ?? true)))
+                shouldInclude: x => (filter?.ShouldIncludes(x.Tags) ?? true)))
             {
                 if (value.TryGetValue(tick, out var trackerMetaData) && trackerMetaData.Count > 0)
                 {
@@ -133,7 +129,7 @@ namespace Tracking
 
 
 
-        protected bool TryGetRawLatestValueAtNextTick(string propertyName, out int outputTick, out (int Version, TrackerMetaData Data)? output, int minTick, int maxTick)
+        protected bool TryGetRawLatestValueAtOrNextTick(string propertyName, out int outputTick, out (int Version, TrackerMetaData Data)? output, int minTick, int maxTick, IReadOnlyTagFilter filter)
         {
             outputTick = 0; // Initialize outputTick
 
@@ -148,7 +144,7 @@ namespace Tracking
                     return false;
                 }
 
-                bool result = Settings?.Filter?.ShouldIncludes(x.Tags) ?? true;
+                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
                 if (result)
                 {
                     lastTick = x.Tick;
@@ -174,7 +170,7 @@ namespace Tracking
         }
 
 
-        protected bool TryGetRawLatestValueAtPreviousTick(string propertyName, out int outputTick, out (int Version, TrackerMetaData Data)? output, int minTick, int maxTick)
+        protected bool TryGetRawLatestValueAtOrPreviousTick(string propertyName, out int outputTick, out (int Version, TrackerMetaData Data)? output, int minTick, int maxTick, IReadOnlyTagFilter filter)
         {
             outputTick = 0; // Initialize outputTick
             int? lastTick = null;
@@ -188,7 +184,7 @@ namespace Tracking
                     return false;
                 }
 
-                bool result = Settings?.Filter?.ShouldIncludes(x.Tags) ?? true;
+                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
                 if (result)
                 {
                     lastTick = x.Tick;
@@ -221,11 +217,11 @@ namespace Tracking
 
         #region Raw TryGet Detailed
 
-        protected bool TryGetRawDetailedValueAtTick(string propertyName, int tick, out IEnumerable<(int Version, TrackerMetaData Data)> output)
+        protected bool TryGetRawDetailedValueAtTick(string propertyName, int tick, out IEnumerable<(int Version, TrackerMetaData Data)> output, IReadOnlyTagFilter filter)
         {
             if (Storage.TryGetPropertyValue(
                 propertyName, out var value, minTick: tick, maxTick: tick,
-                shouldInclude: x => (Settings?.Filter?.ShouldIncludes(x.Tags) ?? true)))
+                shouldInclude: x => (filter?.ShouldIncludes(x.Tags) ?? true)))
             {
                 if (value.TryGetValue(tick, out var trackerMetaData) && trackerMetaData.Count > 0)
                 {
@@ -238,7 +234,7 @@ namespace Tracking
             return false;
         }
 
-        protected bool TryGetRawDetailedValuesAtNextTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick)
+        protected bool TryGetRawDetailedValuesAtOrNextTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick, IReadOnlyTagFilter filter)
         {
             outputTick = 0; // Initialize outputTick
             int? lastTick = null;
@@ -253,7 +249,7 @@ namespace Tracking
                     return false;
                 }
 
-                bool result = Settings?.Filter?.ShouldIncludes(x.Tags) ?? true;
+                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
 
                 if (result)
                 {
@@ -282,7 +278,7 @@ namespace Tracking
             return false;
         }
 
-        protected bool TryGetRawDetailedValuesAtPreviousTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick)
+        protected bool TryGetRawDetailedValuesAtOrPreviousTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick, IReadOnlyTagFilter filter)
         {
             outputTick = 0; // Initialize outputTick
             int? lastTick = null;
@@ -297,7 +293,7 @@ namespace Tracking
                     return false;
                 }
 
-                bool result = Settings?.Filter?.ShouldIncludes(x.Tags) ?? true;
+                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
                 if (result)
                 {
                     lastTick = x.Tick;
@@ -330,156 +326,7 @@ namespace Tracking
         #endregion
 
 
-        #region Typed TryGet Latest
-
-        private int HandleTickBound(int? tick, int? defaultTick, string tickName, bool logError)
-        {
-            if (!tick.HasValue)
-            {
-                int resolvedTick = defaultTick ?? (tickName == "minTick" ? int.MinValue : int.MaxValue);
-
-                if (defaultTick.HasValue && logError)
-                {
-                    Log.Warning($"{tickName} is not specified. Using the scoped setting's value of {resolvedTick}.");
-                }
-
-                return resolvedTick;
-            }
-
-            return tick.Value;
-        }
-
-
-
-        public bool TryGetTypedLatestValueAtPreviousTick<T>(string propertyName, int minTick, out int outputTick, out T output, bool logError = false)
-        {
-
-            if (TryGetRawLatestValueAtPreviousTick(propertyName, out outputTick, out var rawOutput, minTick, Settings.MaxTick) && rawOutput.HasValue)
-            {
-                if (rawOutput.Value.Data.Data is T typedValue)
-                {
-                    output = typedValue;
-                    return true;
-                }
-                else
-                {
-                    Log.Error($"Unexpected type for {propertyName}. Expected {typeof(T)}, but found {rawOutput.Value.Data.Data.GetType()}. Returning default.");
-                }
-            }
-
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-            output = default;
-            return false;
-        }
-
-        public bool TryGetTypedLatestValueAtNextTick<T>(string propertyName, int maxTick, out int outputTick, out T output, bool logError = false)
-        {
-
-            if (TryGetRawLatestValueAtNextTick(propertyName, out outputTick, out var rawOutput, Settings.MinTick, maxTick) && rawOutput.HasValue)
-            {
-                if (rawOutput.Value.Data.Data is T typedValue)
-                {
-                    output = typedValue;
-                    return true;
-                }
-                else
-                {
-                    Log.Error($"Unexpected type for {propertyName}. Expected {typeof(T)}, but found {rawOutput.Value.Data.Data.GetType()}. Returning default.");
-                }
-            }
-
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-
-            output = default;
-            return false;
-        }
-
-        public bool TryGetTypedLatestValueAtTick<T>(string propertyName, ref int tick, out T output, bool logError = false)
-        {
-            Settings?.ClampAndWarn(ref tick);
-
-            if (TryGetRawLatestValueAtTick(propertyName, ref tick, out var rawOutput) && rawOutput.HasValue)
-            {
-                if (rawOutput.Value.Data.Data is T typedValue)
-                {
-                    output = typedValue;
-                    return true;
-                }
-                else
-                {
-                    Log.Error($"Unexpected type for {propertyName}. Expected {typeof(T)}, but found {rawOutput.Value.Data.Data.GetType()}. Returning default.");
-                }
-            }
-
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-            output = default;
-            return false;
-        }
-
-        #endregion
-
-        #region Typed TryGet Detailed
-
-        private T ConvertData<T>(object data, bool logError = false)
-        {
-            if (data is T typedValue)
-            {
-                return typedValue;
-            }
-            else
-            {
-                Log.Error($"Unexpected type. Expected {typeof(T)}, but found {data.GetType()}. Returning default.");
-                return default;
-            }
-        }
-
-        public bool TryGetTypedDetailedValueAtTick<T>(string propertyName, int tick, out IEnumerable<(int Version, T Data)> output, bool logError = false)
-        {
-            Settings?.ClampAndWarn(ref tick);
-
-
-            if (TryGetRawDetailedValueAtTick(propertyName, tick, out var rawOutput) && rawOutput != null)
-            {
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
-                return true;
-            }
-
-            if (logError) Log.Warning($"Can't find values for {propertyName} at tick {tick}. Returning default.");
-            output = null;
-            return false;
-        }
-
-        public bool TryGetTypedDetailedValuesAtNextTick<T>(string propertyName, int minTick, out int outputTick, out IEnumerable<(int Version, T Data)> output, bool logError = false)
-        {
-
-            if (TryGetRawDetailedValuesAtNextTick(propertyName, out outputTick, out var rawOutput, minTick: minTick, maxTick: Settings.MaxTick) && rawOutput != null)
-            {
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
-
-                return true;
-            }
-
-            if (logError) Log.Warning($"Can't find values for {propertyName} between ticks {minTick} and {Settings.MaxTick}. Returning default.");
-
-            output = null;
-            return false;
-        }
-
-        public bool TryGetTypedDetailedValuesAtPreviousTick<T>(string propertyName, int maxTick, out int outputTick, out IEnumerable<(int Version, T Data)> output, bool logError = false)
-        {
-
-            if (TryGetRawDetailedValuesAtPreviousTick(propertyName, out outputTick, out var rawOutput, maxTick: maxTick, minTick: Settings.MinTick) && rawOutput != null)
-            {
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
-                return true;
-            }
-
-            if (logError) Log.Warning($"Can't find values for {propertyName} between ticks {Settings.MinTick} and {maxTick}. Returning default.");
-            output = null;
-            return false;
-        }
-
-        #endregion
+        
 
 
     }

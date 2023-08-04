@@ -74,15 +74,6 @@ namespace Sandbox.Components
                 {
                     var detailedData = tracker.GetDetailedOrDefault<Vector3>(nameof(Entity.Position), displacementTick, default);
 
-                    if(detailedData != null)
-                    {
-                        Log.Info(detailedData.GetType());
-
-                    }
-
-                    int count = detailedData?.Count() ?? 0;
-                    Log.Info(count);
-
                     // Get the position and rotation of the Entity at displacementTick
                     var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTick, lastKnownPosition).Data;
                     var rotationOfTracker = tracker.GetOrNextOrDefault<Rotation>(nameof(Entity.Rotation), displacementTick, lastKnownRotation).Data;

@@ -2,18 +2,8 @@
 
 namespace Tracking
 {
-    public interface IScopedTickSettings
-    {
-        int MinTick { get; }
 
-        int MaxTick { get; }
-
-        IReadOnlyTagFilter Filter { get; }
-
-        void ClampAndWarn(ref int tick);
-    }
-
-    public partial class ScopedTickSettings : IScopedTickSettings
+    public partial class ScopedTickSettings
     {
         public int MinTick { get; }
 
@@ -39,7 +29,7 @@ namespace Tracking
 
         public ScopedTickSettings(int minTick, int maxTick, TagFilter filter = default)
         {
-            if(minTick > maxTick)
+            if (minTick > maxTick)
             {
                 Log.Warning("Swapped MinTick and MaxTick as MinTick greater than MaxTick");
                 MinTick = maxTick;
@@ -49,41 +39,41 @@ namespace Tracking
             {
                 MinTick = minTick;
                 MaxTick = maxTick;
-                Filter = filter;
             }
 
+            Filter = filter;
+        }
 
+        public void ClampMinAndWarn(ref int minTick)
+        {
+            if(minTick < MinTick)
+            {
+                Log.Warning($"minTick: {minTick} is less than ScopedSettings.MinTick.");
+            }
+        }
+
+        public void ClampMaxAndWarn(ref int maxTick)
+        {
+            if (maxTick > MaxTick)
+            {
+                Log.Warning($"maxTick: {maxTick} is bigger than ScopedSettings.MaxTick.");
+            }
         }
 
         public void ClampAndWarn(ref int tick)
         {
             if (tick < MinTick)
             {
-                Log.Warning($"Tick {tick} is less than ScopedSettings.MinTick. Clamping to ScopedSettings.MinTick.");
-                tick = MinTick;
-            }
-            else if (tick > MaxTick)
-            {
-                Log.Warning($"Tick {tick} is greater than ScopedSettings.MaxTick. Clamping to ScopedSettings.MaxTick.");
-                tick = MaxTick;
-            }
-        }
-
-        public int ClampAndWarn(int tick)
-        {
-            if (tick < MinTick)
-            {
-                Log.Warning($"Tick {tick} is less than ScopedSettings.MinTick. Clamping to ScopedSettings.MinTick.");
-                return MinTick;
-            }
-            else if (tick > MaxTick)
-            {
-                Log.Warning($"Tick {tick} is greater than ScopedSettings.MaxTick. Clamping to ScopedSettings.MaxTick.");
-                return MaxTick;
+                Log.Warning($"minTick: {tick} is less than ScopedSettings.MinTick.");
             }
 
-            return tick;
+            if (tick > MaxTick)
+            {
+                Log.Warning($"maxTick: {tick} is bigger than ScopedSettings.MaxTick.");
+            }
+
         }
+
 
 
     }

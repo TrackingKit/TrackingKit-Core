@@ -8,6 +8,24 @@ namespace Tracking
     public static class TimeUtility
     {
         private static SortedDictionary<double, int> Seconds { get; set; } = new SortedDictionary<double, int>();
+        
+
+        public static double TickToSecond(int tick)
+        {
+            var lowerTicks = Seconds.Where(pair => pair.Value >= tick).LastOrDefault();
+            var upperTicks = Seconds.Where(pair => pair.Value >= tick).FirstOrDefault();
+
+            if(lowerTicks.Value == 0 ||  upperTicks.Value == 0)
+            {
+                Log.Error("Not enough data to interopolate seconds.");
+            }
+
+            double tickSpan = upperTicks.Value - lowerTicks.Value;
+            double secondSpand = upperTicks.Key - lowerTicks.Key;
+            double ratio = (tick - lowerTicks.Value) / tickSpan;
+
+            return lowerTicks.Key + secondSpand * ratio;
+        }
 
         public static int SecondToTick(double second)
         {
@@ -49,14 +67,7 @@ namespace Tracking
         private static void Tick()
         {
             double currentTime = Time.Now;
-            if (Seconds.ContainsKey(currentTime))
-            {
-                Seconds[currentTime] = Time.Tick;
-            }
-            else
-            {
-                Seconds.Add(currentTime, Time.Tick);
-            }
+            Seconds[currentTime] = Time.Tick;
         }
     }
 }

@@ -9,79 +9,63 @@ namespace Tracking
 {
     public sealed class ScopedTickTracker : IDisposable
     {
-        private TrackerStorage Data { get; }
+        private readonly ScopedTicksTrackingHelper DataHelper;
 
-        private ScopedTickSettings ScopedSettings { get; }
+        private readonly int targetTick;
 
         internal ScopedTickTracker(TrackerStorage data, ScopedTickSettings scopedSettings)
         {
-            Data = data;
-            ScopedSettings = scopedSettings;
+            targetTick = scopedSettings.MinTick;
+
+            DataHelper = new(data, scopedSettings);
         }
 
 
-        //public int Count()
-        //    => Data.Count;
+        public int Count()
+            => DataHelper.Count();
 
-       // [Obsolete("no filter")]
-        //public IEnumerable<string> GetDistinctKeys()
-        //    => Data.DistinctKeys;
+        public bool Exists(string propertyName)
+            => DataHelper.PropertyExists(propertyName);
 
-        //public bool Exists(string propertyName)
-        //    => Data.Exists
-        
-        /*
-        public T Get<T>(string propertyName)
+        public bool Exists()
+            => DataHelper.Exists();
+
+        private T GetInternal<T>(string propertyName, int tick, bool logError, T defaultValue = default)
         {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
-
-            if (!query.Any())
+            if (DataHelper.TryGetTypedLatestValueAtTick<T>(propertyName, targetTick, out var result, logError: logError))
             {
-                Log.Error("No values found of that type");
-                return default;
+                return result;
             }
 
-            // Highest version.
-            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
-
-            return (T)itemToSelect.Value;
+            return defaultValue;
         }
+
+        public T Get<T>(string propertyName)
+            => GetInternal<T>(propertyName, targetTick, logError: true);
 
         public T GetOrDefault<T>(string propertyName, T defaultValue)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
+            => GetInternal<T>(propertyName, targetTick, logError: false, defaultValue);
 
-            if (!query.Any())
+
+
+        private IEnumerable<(int Version, T Value)> GetDetailedInternal<T>(string propertyName, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
+        {
+            if (DataHelper.TryGetTypedDetailedValueAtTick<T>(propertyName, targetTick, out var value, logError: logError))
             {
-                return defaultValue;
+                return value;
             }
 
-            // Highest version.
-            var itemToSelect = query.OrderByDescending(pair => pair.Key.Version).First();
-
-            return (T)itemToSelect.Value;
+            return (defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
         }
 
-        public IEnumerable<T> GetDetailed<T>(string propertyName)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick), ScopedSettings.Tags);
 
-            return query.Select(pair => (T)pair.Value);
-        }
+        public IEnumerable<(int Version, T Value)> GetDetailed<T>(string propertyName)
+            => GetDetailedInternal<T>(propertyName, logError: true);
 
-        public IEnumerable<T> GetDetailedOrDefault<T>(string propertyName, IEnumerable<T> defaultValue)
-        {
-            var query = Data.Query(propertyName, (ScopedSettings.MinTick, ScopedSettings.MaxTick));
+        public IEnumerable<(int Version, T Value)> GetDetailedOrDefault<T>(string propertyName, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedInternal<T>(propertyName, logError: false, defaultValue);
 
-            if (!query.Any())
-            {
-                return defaultValue;
-            }
 
-            return query.Select(pair => (T)pair.Value);
-        }
-
-        */
 
         public void Dispose()
         {

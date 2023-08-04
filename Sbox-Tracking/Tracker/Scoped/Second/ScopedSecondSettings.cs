@@ -8,16 +8,20 @@ namespace Tracking
 {
     public partial class ScopedSecondSettings
     {
-        public float MinSecond { get; }
+        public double MinSecond { get; }
 
-        public float MaxSecond { get; }
+        public double MaxSecond { get; }
 
         public bool IsSpecificSecond => MinSecond == MaxSecond;
+
+        public int MinTick => TimeUtility.SecondToTick(MinSecond);
+
+        public int MaxTick => TimeUtility.SecondToTick(MaxSecond);
 
 
         public TagFilter Filter { get; }
 
-        public float SpecificTick
+        public double SpecificSecond
         {
             get
             {
@@ -34,5 +38,40 @@ namespace Tracking
             MaxSecond = maxSecond;
             Filter = filter;
         }
+
+        public void ClampMinAndWarn(ref double minSecond)
+        {
+            if (minSecond < MinSecond)
+            {
+                Log.Warning($"minSecond: {minSecond} is less than ScopedSettings.MinSecond.");
+                minSecond = MinSecond;
+            }
+        }
+
+        public void ClampMaxAndWarn(ref double maxSecond)
+        {
+            if (maxSecond > MaxSecond)
+            {
+                Log.Warning($"maxSecond: {maxSecond} is bigger than ScopedSettings.MaxSecond.");
+                maxSecond = MaxSecond;
+            }
+        }
+
+        public void ClampAndWarn(ref double second)
+        {
+            if (second < MinSecond)
+            {
+                Log.Warning($"minSecond: {second} is less than ScopedSettings.MinSecond.");
+                second = MinSecond;
+            }
+
+            if (second > MaxSecond)
+            {
+                Log.Warning($"maxSecond: {second} is bigger than ScopedSettings.MaxSecond.");
+                second = MaxSecond;
+            }
+
+        }
+
     }
 }
