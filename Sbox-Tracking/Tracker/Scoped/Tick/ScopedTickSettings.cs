@@ -2,7 +2,18 @@
 
 namespace Tracking
 {
-    public partial class ScopedTickSettings
+    public interface IScopedTickSettings
+    {
+        int MinTick { get; }
+
+        int MaxTick { get; }
+
+        IReadOnlyTagFilter Filter { get; }
+
+        void ClampAndWarn(ref int tick);
+    }
+
+    public partial class ScopedTickSettings : IScopedTickSettings
     {
         public int MinTick { get; }
 
@@ -10,7 +21,7 @@ namespace Tracking
 
         public bool IsSpecificTick => MinTick == MaxTick;
 
-        public readonly IReadOnlyTagFilter Filter;
+        public IReadOnlyTagFilter Filter { get; }
 
         public int SpecificTick
         {

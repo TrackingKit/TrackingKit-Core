@@ -14,7 +14,7 @@ namespace Tracking
 
         private readonly TrackerStorage Storage;
 
-        private readonly ScopedTickSettings Settings;
+        private readonly IScopedTickSettings Settings;
 
 
         internal ScopedTrackingHelper(TrackerStorage storageData)
@@ -23,7 +23,7 @@ namespace Tracking
         }
 
 
-        internal ScopedTrackingHelper(TrackerStorage storageData, ScopedTickSettings scopedTickSettings)
+        internal ScopedTrackingHelper(TrackerStorage storageData, IScopedTickSettings scopedTickSettings)
         {
             Storage = storageData;
             Settings = scopedTickSettings;

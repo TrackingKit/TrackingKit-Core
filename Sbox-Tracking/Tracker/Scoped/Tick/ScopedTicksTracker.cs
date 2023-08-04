@@ -118,7 +118,7 @@ namespace Tracking
                 return value;
             }
 
-            return defaultValue;
+            return ( defaultValue ?? Enumerable.Empty<(int Version, T Value)>() ); // Return the original tick and default values, if specified.
         }
 
 
@@ -140,7 +140,7 @@ namespace Tracking
                 return (tickResult, value);
             }
 
-            return (tick, defaultValue); // Return the original tick and default values, if specified.
+            return (tick, defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
         }
 
 
@@ -163,7 +163,7 @@ namespace Tracking
                 return (tickResult, value);
             }
 
-            return (tick, defaultValue); // Return the original tick and default values, if specified.
+            return (tick, defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
         }
 
         public (int Tick, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNext<T>(string propertyName, int tick)
