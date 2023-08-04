@@ -11,7 +11,7 @@ namespace Tracking.Rules
     public abstract class TrackerRule
     {
         [Obsolete("Potentially deleted as too much freedom given.")]
-        public TrackerData Data { get; internal init; }
+        internal TrackerStorage Data { get; init; }
 
         
 

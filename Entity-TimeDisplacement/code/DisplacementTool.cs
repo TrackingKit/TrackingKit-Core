@@ -52,7 +52,7 @@ namespace Sandbox
                 {
                     var item = FileSystem.Data.ReadJson<TrackingPresistanceData>("wowzers.json");
 
-                    Log.Info(item.Data.Count(default));
+                    //Log.Info(item.Data.Count(default));
 
                 }
 

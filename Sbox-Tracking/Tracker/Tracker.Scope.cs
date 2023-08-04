@@ -1,4 +1,5 @@
 ﻿using Sandbox;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,7 @@ namespace Tracking
 
         #region Tick(s)
 
+        [Obsolete("Not implemented yet.")]
         public ScopedTickTracker ScopeByTick(int specificTick, TagFilter filter = default)
         {
 

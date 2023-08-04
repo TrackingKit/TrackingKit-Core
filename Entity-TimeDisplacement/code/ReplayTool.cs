@@ -136,13 +136,13 @@ namespace Sandbox
                     {
                         if (RewindRate <= 0)
                         {
-                            entity.Position = scope.GetOrPreviousOrDefault(nameof(Entity.Position), TargetTick, entity.Position);
-                            entity.Rotation = scope.GetOrPreviousOrDefault(nameof(Entity.Rotation), TargetTick, entity.Rotation);
+                            entity.Position = scope.GetOrPreviousOrDefault(nameof(Entity.Position), TargetTick, entity.Position).Data;
+                            entity.Rotation = scope.GetOrPreviousOrDefault(nameof(Entity.Rotation), TargetTick, entity.Rotation).Data;
                         }
                         else
                         {
-                            entity.Position = scope.GetOrNextOrDefault(nameof(Entity.Position), TargetTick, entity.Position);
-                            entity.Rotation = scope.GetOrNextOrDefault(nameof(Entity.Rotation), TargetTick, entity.Rotation);
+                            entity.Position = scope.GetOrNextOrDefault(nameof(Entity.Position), TargetTick, entity.Position).Data;
+                            entity.Rotation = scope.GetOrNextOrDefault(nameof(Entity.Rotation), TargetTick, entity.Rotation).Data;
                         }
                     }
                 }

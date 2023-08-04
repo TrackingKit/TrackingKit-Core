@@ -74,8 +74,8 @@ namespace Sandbox.Components
                 {
 
                     // Get the position and rotation of the Entity at displacementTick
-                    var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTick, lastKnownPosition);
-                    var rotationOfTracker = tracker.GetOrNextOrDefault<Rotation>(nameof(Entity.Rotation), displacementTick, lastKnownRotation);
+                    var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTick, lastKnownPosition).Data;
+                    var rotationOfTracker = tracker.GetOrNextOrDefault<Rotation>(nameof(Entity.Rotation), displacementTick, lastKnownRotation).Data;
 
                     // Apply the tracked position and rotation to the DisplacedEntity if they're not the same already
                     if (DisplacedEntity.Position != positionOfTracked || DisplacedEntity.Rotation != rotationOfTracker)

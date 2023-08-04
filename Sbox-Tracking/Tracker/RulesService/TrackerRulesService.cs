@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Tracking;
 using Tracking.Rules;
@@ -24,14 +25,20 @@ namespace Tracking.RulesService
         }
     }
 
+    [JsonConverter(typeof(TrackerRulesServiceConverter))]
     public partial class TrackerRulesService : ICloneable
     {
-        protected TrackerData Data { get; }
+        internal TrackerStorage Data { private get; set; }
 
 
-        internal TrackerRulesService(TrackerData data)
+        internal TrackerRulesService(TrackerStorage data)
         {
             Data = data;
+        }
+
+        internal TrackerRulesService()
+        {
+
         }
 
         // TODO: Rules enabled option?

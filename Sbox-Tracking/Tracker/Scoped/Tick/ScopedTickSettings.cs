@@ -10,7 +10,7 @@ namespace Tracking
 
         public bool IsSpecificTick => MinTick == MaxTick;
 
-        public TagFilter Filter { get; }
+        public readonly IReadOnlyTagFilter Filter;
 
         public int SpecificTick
         {
@@ -43,5 +43,37 @@ namespace Tracking
 
 
         }
+
+        public void ClampAndWarn(ref int tick)
+        {
+            if (tick < MinTick)
+            {
+                Log.Warning($"Tick {tick} is less than ScopedSettings.MinTick. Clamping to ScopedSettings.MinTick.");
+                tick = MinTick;
+            }
+            else if (tick > MaxTick)
+            {
+                Log.Warning($"Tick {tick} is greater than ScopedSettings.MaxTick. Clamping to ScopedSettings.MaxTick.");
+                tick = MaxTick;
+            }
+        }
+
+        public int ClampAndWarn(int tick)
+        {
+            if (tick < MinTick)
+            {
+                Log.Warning($"Tick {tick} is less than ScopedSettings.MinTick. Clamping to ScopedSettings.MinTick.");
+                return MinTick;
+            }
+            else if (tick > MaxTick)
+            {
+                Log.Warning($"Tick {tick} is greater than ScopedSettings.MaxTick. Clamping to ScopedSettings.MaxTick.");
+                return MaxTick;
+            }
+
+            return tick;
+        }
+
+
     }
 }

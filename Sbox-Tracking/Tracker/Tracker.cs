@@ -12,7 +12,8 @@ namespace Tracking
 {
     public partial class Tracker
     {
-        protected TrackerData Data { get; private set; } = new();
+        // TODO: This is annoying internal private?
+        internal TrackerStorage Data { get; } = new();
 
         internal Tracker()
         {
@@ -74,41 +75,9 @@ namespace Tracking
             }
         }
 
-        // TODO: Double check all this logic is fine.
         protected void HandleDelete()
         {
-            ConcurrentBag<TrackerKey> keysToCleanUp = new();
 
-
-            /*
-            // Use Task.WhenAll to await multiple tasks at once
-            await GameTask.WhenAll(Data.Query().Select(value =>
-                GameTask.RunInThreadAsync(() =>
-                {
-
-                    var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value) );
-
-                    Log.Info(result);
-
-                    if (result.HasValue && result.Value == true)
-                        keysToCleanUp.Add(value.Key);
-                })));
-            */
-
-            /*
-            foreach (var value in Data.Query())
-            {
-
-                var result = Rules.GetAll<TrackerRule>().ShortCircuit(c => c.ShouldDelete(value.Key, value.Value));
-
-                if (result.HasValue && result.Value == true)
-                    keysToCleanUp.Add(value.Key);
-            }
-
-            // I aint sure if thread safe. So just doing safe for now.
-            foreach (var key in keysToCleanUp)
-                Data.RemoveValue(key.PropertyName, key.Tick, key.Version);
-            */
         }
 
 
@@ -126,16 +95,23 @@ namespace Tracking
             if (Pause)
                 return;
 
-            TrackerQuery trackerQuery = new TrackerQuery()
+
+            var latestValueDataFound = Data.TryGetPropertyValue(propertyName, out var output, minTick: tick, maxTick: tick);
+
+
+            int nextVersion;
+
+            if (latestValueDataFound)
             {
-                PropertyName = propertyName,
-                Tick = tick,
-            };
+                // Assuming output is a dictionary of ticks to another dictionary of versions to metadata
+                // You might need to adjust this based on the exact structure of your data
+                nextVersion = output.Max(kvp => kvp.Value.Max(innerKvp => innerKvp.Key)) + 1;
+            }
+            else
+            {
+                nextVersion = 1;
+            }
 
-            var latestValueDataFound = Data.TryGetLatestValue(trackerQuery, out TrackerQueryResult result);
-
-            // Getting the latest version recorded for the specified property at a given tick
-            int nextVersion = latestValueDataFound ? result.Value.Key.Version + 1 : 1;
 
             // Merging identifiers from the current scope with the identifiers passed as parameters
             var tags = idents.AsEnumerable().Concat(CurrentBuildTags).ToArray();
@@ -157,8 +133,8 @@ namespace Tracking
         public void Add(string propertyName, object value, params string[] idents)
             => Add(propertyName, value, Time.Tick, idents);
 
-        public void Remove(string propertyName, int tick)
-            => Data.RemoveValue(propertyName, tick);
+        public void RemoveValues(string propertyName, int tick)
+            => Data.RemoveValues(propertyName, tick);
 
         public void RemovSpecificVersion(string propertyName, int tick, int version)
             => Data.RemoveSpecificValue(propertyName, tick, version);

@@ -1,4 +1,5 @@
 ﻿using Sandbox;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,16 +12,16 @@ namespace Tracking
 {
     public partial class TrackingPresistanceData
     {
-        public TrackingPresistanceData(TrackerData data, TrackerRulesService rules)
+        internal TrackingPresistanceData(TrackerStorage data, TrackerRulesService rules)
         {
-            Data = data;
-            Rules = rules;
+            //TrackingData = data;
+            TrackerRules = rules;
 
         }
 
-        public TrackerData Data { get; }
+        //public TrackerStorage TrackingData { get; }
 
-        public TrackerRulesService Rules { get; }
+        public TrackerRulesService TrackerRules { get; }
 
     }
 
@@ -29,32 +30,31 @@ namespace Tracking
     {
         public TrackingPresistanceData CopyData(bool saveRules = false, TagFilter filter = default)
         {
-            var copy = new TrackerRangeQuery()
-            {
-                Filter = filter,
-            };
+            throw new Exception();  
+
+            /*
+
+            //var dataCloned = Data.Clone(copy);
+            var rulesCloned = (TrackerRulesService)Rules.Clone();
 
 
-            var dataCloned = Data.Clone(copy);
-
-
-
-            TrackingPresistanceData presistanceData = new(dataCloned, default);
+            //TrackingPresistanceData presistanceData = new(dataCloned, rulesCloned);
 
 
             return presistanceData;
+            */
         }
 
 
         public void MergeData(TrackingPresistanceData presistanceData)
         {
-            Data.Merge(presistanceData.Data);
+            //Data.Merge(presistanceData.TrackingData);
         }
 
         public void LoadData(TrackingPresistanceData presistanceData)
         {
-            Data = presistanceData.Data;
-            Rules = presistanceData.Rules;
+            //Data = presistanceData.TrackingData;
+            //Rules = presistanceData.TrackerRules;
 
         }
 

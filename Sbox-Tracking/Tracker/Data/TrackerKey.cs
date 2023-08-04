@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Sandbox;
 
 namespace Tracking
@@ -17,7 +18,7 @@ namespace Tracking
         public int Version { get; init; }
 
         /// <summary> Tags on this tag allowing filtering of keys with tags. </summary>
-        public string[] Tags { get; init; }
+        public IReadOnlyCollection<string> Tags { get; init; }
 
         public int CompareTo(TrackerKey other)
         {

@@ -9,11 +9,11 @@ namespace Tracking
 {
     public sealed class ScopedTickTracker : IDisposable
     {
-        private TrackerData Data { get; }
+        private TrackerStorage Data { get; }
 
         private ScopedTickSettings ScopedSettings { get; }
 
-        internal ScopedTickTracker(TrackerData data, ScopedTickSettings scopedSettings)
+        internal ScopedTickTracker(TrackerStorage data, ScopedTickSettings scopedSettings)
         {
             Data = data;
             ScopedSettings = scopedSettings;

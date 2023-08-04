@@ -6,10 +6,10 @@ namespace Tracking
 {
     public partial class ScopedSecondsTracker : IDisposable
     {
-        private TrackerData Data { get; }
+        private TrackerStorage Data { get; }
         private ScopedSecondSettings ScopedSettings { get; }
 
-        internal ScopedSecondsTracker(TrackerData data, ScopedSecondSettings scopedSettings)
+        internal ScopedSecondsTracker(TrackerStorage data, ScopedSecondSettings scopedSettings)
         {
             Data = data;
             ScopedSettings = scopedSettings;
