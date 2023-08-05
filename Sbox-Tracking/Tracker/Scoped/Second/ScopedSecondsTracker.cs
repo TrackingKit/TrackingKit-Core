@@ -151,7 +151,6 @@ namespace Tracking
 
             return (second, defaultValue ?? Enumerable.Empty<(int Version, T Value)>());
         }
-    }
 
         public (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNext<T>(string propertyName, double second)
             => GetDetailedOrNextInternal<T>(propertyName, second, logError: true);

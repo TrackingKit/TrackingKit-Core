@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Tracking;
+using static Tracking.ScopedTrackingHelper;
 
 namespace Tracking
 {
@@ -48,22 +49,23 @@ namespace Tracking
 
 
 
-        private IEnumerable<(int Version, T Value)> GetDetailedInternal<T>(string propertyName, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
+        private IEnumerable<(int Version, T Value)> GetDetailedInternal<T>(string propertyName, int targetTick, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            if (DataHelper.TryGetTypedDetailedValueAtTick<T>(propertyName, targetTick, out var value, logError: logError))
+            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out _, out var value, TickSearchMode.AtTick, minTick: targetTick, maxTick: targetTick, logError: logError))
             {
                 return value;
             }
 
-            return (defaultValue ?? Enumerable.Empty<(int Version, T Value)>()); // Return the original tick and default values, if specified.
+            return defaultValue ?? Enumerable.Empty<(int Version, T Value)>(); // Return the original tick and default values, if specified.
         }
 
 
-        public IEnumerable<(int Version, T Value)> GetDetailed<T>(string propertyName)
-            => GetDetailedInternal<T>(propertyName, logError: true);
 
-        public IEnumerable<(int Version, T Value)> GetDetailedOrDefault<T>(string propertyName, IEnumerable<(int Version, T Value)> defaultValue)
-            => GetDetailedInternal<T>(propertyName, logError: false, defaultValue);
+        public IEnumerable<(int Version, T Value)> GetDetailed<T>(string propertyName, int targetTick)
+            => GetDetailedInternal<T>(propertyName, targetTick, logError: true);
+
+        public IEnumerable<(int Version, T Value)> GetDetailedOrDefault<T>(string propertyName, int targetTick, IEnumerable<(int Version, T Value)> defaultValue)
+            => GetDetailedInternal<T>(propertyName, targetTick, logError: false, defaultValue);
 
 
 
