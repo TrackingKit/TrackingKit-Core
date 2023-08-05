@@ -128,69 +128,58 @@ namespace Tracking
             }
         }
 
-        public bool TryGetTypedDetailedValueAtSecond<T>(string propertyName, double second, out IEnumerable<(int Version, T Data)> output, bool logError = false)
+        public bool TryGetTypedDetailedValues<T>(string propertyName, out double outputSecond, out IEnumerable<(int Version, T Data)> output, TickSearchMode searchMode, double? minSecond = null, double? maxSecond = null, bool logError = false)
         {
-            Settings.ClampAndWarn(ref second);
+            outputSecond = 0; // Initialize to default
 
-            var convertedSecondToTick = TimeUtility.SecondToTick(second);
+            double finalMinSecond = minSecond.HasValue ? minSecond.Value : TimeUtility.TickToSecond(Settings.MinTick);
+            double finalMaxSecond = maxSecond.HasValue ? maxSecond.Value : TimeUtility.TickToSecond(Settings.MaxTick);
 
-            if (TryGetRawDetailedValueAtTick(propertyName, convertedSecondToTick, out var rawOutput, filter: Settings.Filter) && rawOutput != null)
+            switch (searchMode)
             {
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
-                return true;
+                case TickSearchMode.AtTick:
+                    if (finalMinSecond != finalMaxSecond)
+                    {
+                        Log.Warning($"In 'AtTick' mode, minSecond and maxSecond should be equal. Setting maxSecond to {finalMinSecond}.");
+                        finalMaxSecond = finalMinSecond; // In case of AtTick, maxSecond should be same as minSecond
+                    }
+                    if (minSecond.HasValue) Settings.ClampAndWarn(ref finalMinSecond);
+                    if (maxSecond.HasValue) Settings.ClampAndWarn(ref finalMaxSecond);
+                    break;
+                case TickSearchMode.AtOrNextTick:
+                    if (minSecond.HasValue) Settings.ClampMinAndWarn(ref finalMinSecond);
+                    break;
+                case TickSearchMode.AtOrPreviousTick:
+                    if (maxSecond.HasValue) Settings.ClampMaxAndWarn(ref finalMaxSecond);
+                    break;
             }
 
-            if (logError) Log.Warning($"Can't find values for {propertyName} at tick {convertedSecondToTick}. Returning default.");
+            int minTick = TimeUtility.SecondToTick(finalMinSecond);
+            int maxTick = TimeUtility.SecondToTick(finalMaxSecond);
 
-            output = null;
-            return false;
-        }
-
-        public bool TryGetTypedDetailedValuesAtOrNextSecond<T>(string propertyName, double minSecond, out double outputSecond, out IEnumerable<(int Version, T Data)> output, bool logError = false)
-        {
-            Settings.ClampMinAndWarn(ref minSecond);
-
-            var convertedSecondToTick = TimeUtility.SecondToTick(minSecond);
-
-
-            if (TryGetRawDetailedValuesAtOrNextTick(propertyName, out var outputTick, out var rawOutput, minTick: convertedSecondToTick, maxTick: Settings.MaxTick, filter: Settings.Filter) && rawOutput != null)
+            if (TryGetRawDetailedValues(propertyName, minTick, maxTick, out int outputTick, out var rawOutput, Settings.Filter, searchMode) && rawOutput != null)
             {
+                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
                 outputSecond = TimeUtility.TickToSecond(outputTick);
-
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
-
                 return true;
             }
 
-            if (logError) Log.Warning($"Can't find values for {propertyName} between seconds {convertedSecondToTick} and {Settings.MaxSecond}. Returning default.");
-
-            outputSecond = default;
-            output = null;
-            return false;
-        }
-
-        public bool TryGetTypedDetailedValuesAtOrPreviousSecond<T>(string propertyName, double maxSecond, out double outputSecond, out IEnumerable<(int Version, T Data)> output, bool logError = false)
-        {
-            Settings.ClampMinAndWarn(ref maxSecond);
-
-            var convertedSecondToTick = TimeUtility.SecondToTick(maxSecond);
-
-
-            if (TryGetRawDetailedValuesAtOrPreviousTick(propertyName, out var outputTick, out var rawOutput, maxTick: convertedSecondToTick, minTick: Settings.MinTick, filter: Settings.Filter) && rawOutput != null)
+            string errorMessage = searchMode switch
             {
-                outputSecond = TimeUtility.TickToSecond(outputTick);
+                TickSearchMode.AtTick => $"Can't find values for {propertyName} at second {finalMinSecond}. Returning default.",
+                TickSearchMode.AtOrNextTick => $"Can't find values for {propertyName} between seconds {finalMinSecond} and {finalMaxSecond}. Returning default.",
+                TickSearchMode.AtOrPreviousTick => $"Can't find values for {propertyName} between seconds {finalMinSecond} and {finalMaxSecond}. Returning default.",
+                _ => "An unknown error occurred."
+            };
 
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
+            if (logError) Log.Warning(errorMessage);
 
-                return true;
-            }
-
-            if (logError) Log.Warning($"Can't find values for {propertyName} between ticks {Settings.MinSecond} and {convertedSecondToTick}. Returning default.");
-
-            outputSecond = default;
             output = null;
             return false;
         }
+
+
+
 
         #endregion
 

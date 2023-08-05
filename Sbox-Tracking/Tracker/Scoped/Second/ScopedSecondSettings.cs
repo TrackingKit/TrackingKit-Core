@@ -34,6 +34,19 @@ namespace Tracking
 
         public ScopedSecondSettings(float minSecond, float maxSecond, TagFilter filter)
         {
+            if (maxSecond > TimeUtility.MaxSecondRecorded)
+            {
+                maxSecond = (float)TimeUtility.MaxSecondRecorded;
+                Log.Warning($"maxSecond was greater than the maximum recorded second, clamped to {maxSecond}.");
+            }
+
+            if (minSecond < TimeUtility.MinSecondRecorded)
+            {
+                minSecond = (float)TimeUtility.MinSecondRecorded;
+                Log.Warning($"minSecond was less than the minimum recorded second, clamped to {minSecond}.");
+            }
+
+            
             MinSecond = minSecond;
             MaxSecond = maxSecond;
             Filter = filter;

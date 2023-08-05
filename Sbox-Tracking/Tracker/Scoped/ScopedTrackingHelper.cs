@@ -217,6 +217,66 @@ namespace Tracking
 
         #region Raw TryGet Detailed
 
+        protected bool TryGetRawDetailedValues(string propertyName, int minTick, int maxTick, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, IReadOnlyTagFilter filter, TickSearchMode searchMode)
+        {
+            outputTick = 0; // Initialize outputTick
+            List<(int Version, TrackerMetaData Data)> results = new List<(int Version, TrackerMetaData Data)>();
+            int? lastTick = null;
+
+            Func<StopConditionInformation, bool> stopCondition = info => info.AccumulatedSoFar > 0 && (lastTick.HasValue && lastTick.Value != info.Tick);
+
+            Func<TrackerInformation, bool> shouldInclude = x =>
+            {
+                if (lastTick.HasValue && lastTick.Value != x.Tick)
+                {
+                    return false;
+                }
+
+                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
+
+                if (result)
+                {
+                    lastTick = x.Tick;
+                }
+                return result;
+            };
+
+            bool ascending = searchMode != TickSearchMode.AtOrPreviousTick;
+
+            if (searchMode == TickSearchMode.AtTick)
+            {
+                minTick = maxTick;
+            }
+
+            if (Storage.TryGetPropertyValue(propertyName, out var value, minTick: minTick, maxTick: maxTick, shouldInclude: shouldInclude, stopCondition: stopCondition, ascending: ascending))
+            {
+                var firstTickData = value.FirstOrDefault();
+                if (firstTickData.Value != null)
+                {
+                    results.AddRange(firstTickData.Value.Select(kvp => (Version: kvp.Key, Data: kvp.Value)));
+                    outputTick = firstTickData.Key; // Set the outputTick value
+                }
+            }
+
+            if (results.Any())
+            {
+                output = results;
+                return true;
+            }
+
+            output = null;
+            return false;
+        }
+
+        public enum TickSearchMode
+        {
+            AtTick,
+            AtOrNextTick,
+            AtOrPreviousTick
+        }
+
+
+        [Obsolete("Too specific")]
         protected bool TryGetRawDetailedValueAtTick(string propertyName, int tick, out IEnumerable<(int Version, TrackerMetaData Data)> output, IReadOnlyTagFilter filter)
         {
             if (Storage.TryGetPropertyValue(
@@ -234,6 +294,7 @@ namespace Tracking
             return false;
         }
 
+        [Obsolete("Too specific")]
         protected bool TryGetRawDetailedValuesAtOrNextTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick, IReadOnlyTagFilter filter)
         {
             outputTick = 0; // Initialize outputTick
@@ -278,6 +339,7 @@ namespace Tracking
             return false;
         }
 
+        [Obsolete("Too specific")]
         protected bool TryGetRawDetailedValuesAtOrPreviousTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick, IReadOnlyTagFilter filter)
         {
             outputTick = 0; // Initialize outputTick

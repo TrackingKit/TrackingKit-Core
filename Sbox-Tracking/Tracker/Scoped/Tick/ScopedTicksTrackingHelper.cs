@@ -126,55 +126,53 @@ namespace Tracking
             }
         }
 
-        public bool TryGetTypedDetailedValueAtTick<T>(string propertyName, int tick, out IEnumerable<(int Version, T Data)> output, bool logError = false)
+        public bool TryGetTypedDetailedValues<T>(string propertyName, out int outputTick, out IEnumerable<(int Version, T Data)> output, TickSearchMode searchMode, int? minTick = null, int? maxTick = null, bool logError = false)
         {
-            Settings.ClampAndWarn(ref tick);
+            outputTick = 0;
 
+            // Assign default values from Settings if not provided
+            int finalMinTick = minTick ?? Settings.MinTick;
+            int finalMaxTick = maxTick ?? Settings.MaxTick;
 
-            if (TryGetRawDetailedValueAtTick(propertyName, tick, out var rawOutput, filter: Settings.Filter) && rawOutput != null)
+            switch (searchMode)
+            {
+                case TickSearchMode.AtTick:
+                    Settings.ClampAndWarn(ref finalMinTick);
+                    if (finalMinTick != finalMaxTick)
+                    {
+                        Log.Warning("System issue: In 'AtTick' mode, minTick and maxTick should be equal. Setting maxTick to minTick.");
+                        finalMaxTick = finalMinTick; // In case of AtTick, maxTick should be same as minTick
+                    }
+                    break;
+                case TickSearchMode.AtOrNextTick:
+                    Settings.ClampMinAndWarn(ref finalMinTick);
+                    break;
+                case TickSearchMode.AtOrPreviousTick:
+                    Settings.ClampMaxAndWarn(ref finalMaxTick);
+                    break;
+            }
+
+            if (TryGetRawDetailedValues(propertyName, finalMinTick, finalMaxTick, out outputTick, out var rawOutput, Settings.Filter, searchMode) && rawOutput != null)
             {
                 output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
                 return true;
             }
 
-            if (logError) Log.Warning($"Can't find values for {propertyName} at tick {tick}. Returning default.");
-
-            output = null;
-            return false;
-        }
-
-        public bool TryGetTypedDetailedValuesAtOrNextTick<T>(string propertyName, int minTick, out int outputTick, out IEnumerable<(int Version, T Data)> output, bool logError = false)
-        {
-            Settings.ClampMinAndWarn(ref minTick);
-
-            if (TryGetRawDetailedValuesAtOrNextTick(propertyName, out outputTick, out var rawOutput, minTick: minTick, maxTick: Settings.MaxTick, filter: Settings.Filter) && rawOutput != null)
+            string errorMessage = searchMode switch
             {
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
+                TickSearchMode.AtTick => $"Can't find values for {propertyName} at tick {finalMinTick}. Returning default.",
+                TickSearchMode.AtOrNextTick => $"Can't find values for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
+                TickSearchMode.AtOrPreviousTick => $"Can't find values for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
+                _ => "An unknown error occurred."
+            };
 
-                return true;
-            }
-
-            if (logError) Log.Warning($"Can't find values for {propertyName} between ticks {minTick} and {Settings.MaxTick}. Returning default.");
-
-            output = null;
-            return false;
-        }
-
-        public bool TryGetTypedDetailedValuesAtOrPreviousTick<T>(string propertyName, int maxTick, out int outputTick, out IEnumerable<(int Version, T Data)> output, bool logError = false)
-        {
-            Settings.ClampMaxAndWarn(ref maxTick);
-
-            if (TryGetRawDetailedValuesAtOrPreviousTick(propertyName, out outputTick, out var rawOutput, maxTick: maxTick, minTick: Settings.MinTick, filter: Settings.Filter) && rawOutput != null)
-            {
-                output = rawOutput.Select(item => (item.Version, Data: ConvertData<T>(item.Data.Data, logError)));
-                return true;
-            }
-
-            if (logError) Log.Warning($"Can't find values for {propertyName} between ticks {Settings.MinTick} and {maxTick}. Returning default.");
+            if (logError) Log.Warning(errorMessage);
 
             output = null;
             return false;
         }
+
+
 
         #endregion
 

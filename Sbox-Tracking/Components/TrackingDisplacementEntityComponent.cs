@@ -66,9 +66,9 @@ namespace Sandbox.Components
                 Rotation lastKnownRotation = DisplacedEntity.Rotation;
 
                 // Check if tracking data exists for both position and rotation at displacementTick
-                if (tracker.Exists(nameof(Entity.Position)) && tracker.Exists(nameof(Entity.Rotation)))
+                if (tracker.Exists( nameof(Entity.Position) ) && tracker.Exists( nameof(Entity.Rotation) ))
                 {
-                    var detailedData = tracker.GetDetailedOrDefault<Vector3>(nameof(Entity.Position), displacementTime, default);
+                    
 
                     // Get the position and rotation of the Entity at displacementTick
                     var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTime, lastKnownPosition).Data;
