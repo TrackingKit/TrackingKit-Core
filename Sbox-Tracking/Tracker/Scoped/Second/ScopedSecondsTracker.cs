@@ -29,7 +29,7 @@ namespace Tracking
 
         private T GetInternal<T>(string propertyName, double second, bool logError, T defaultValue = default)
         {
-            if (DataHelper.TryGetTypedLatestValueAtSecond<T>(propertyName, second, out var result, logError: logError))
+            if (DataHelper.TryGetTypedLatestValue<T>(propertyName, SearchMode.At, out _, out var result, minSecond: second, maxSecond: second, logError: logError))
             {
                 return result;
             }
@@ -37,13 +37,11 @@ namespace Tracking
             return defaultValue;
         }
 
-
         public T Get<T>(string propertyName, double second)
             => GetInternal<T>(propertyName, second, logError: true);
 
         public T GetOrDefault<T>(string propertyName, double second, T defaultValue)
             => GetInternal<T>(propertyName, second, logError: false, defaultValue);
-
 
         #endregion
 
@@ -51,17 +49,14 @@ namespace Tracking
 
         private (double Second, T Data) GetOrPreviousInternal<T>(string propertyName, double second, bool logError, T defaultValue = default)
         {
-            // Try to get the latest value before or at that tick
-            if (DataHelper.TryGetTypedLatestValueAtOrPreviousSecond(propertyName, second, out var secondValue, out T value, logError: logError))
+            // Try to get the latest value before or at that second
+            if (DataHelper.TryGetTypedLatestValue<T>(propertyName, SearchMode.AtOrPrevious, out var secondValue, out T value, maxSecond: second, logError: logError))
             {
                 return (secondValue, value);
             }
 
             return (second, defaultValue);
         }
-
-
-
 
         public (double Second, T Data) GetOrPrevious<T>(string propertyName, double second)
             => GetOrPreviousInternal<T>(propertyName, second, true);
@@ -75,8 +70,8 @@ namespace Tracking
 
         private (double Second, T Data) GetOrNextInternal<T>(string propertyName, double second, bool logError, T defaultValue = default)
         {
-            // Try to get the latest value before or at that tick
-            if (DataHelper.TryGetTypedLatestValueAtOrNextSecond(propertyName, second, out var secondValue, out T value, logError: logError))
+            // Try to get the latest value before or at that second
+            if (DataHelper.TryGetTypedLatestValue<T>(propertyName, SearchMode.AtOrNext, out var secondValue, out T value, minSecond: second, logError: logError))
             {
                 return (secondValue, value);
             }
@@ -91,6 +86,7 @@ namespace Tracking
             => GetOrNextInternal<T>(propertyName, second, logError: false, defaultValue);
 
         #endregion
+
 
 
         #region GetDetailed methods

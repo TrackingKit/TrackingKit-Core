@@ -35,11 +35,30 @@ namespace Tracking
         #region Typed TryGet Latest
 
 
-        public bool TryGetTypedLatestValueAtOrPreviousSecond<T>(string propertyName, double minSecond, out double outputSecond, out T output, bool logError = false)
+        public bool TryGetTypedLatestValue<T>(string propertyName, SearchMode searchMode, out double outputSecond, out T output, double? minSecond = null, double? maxSecond = null, bool logError = false)
         {
-            Settings.ClampMinAndWarn(ref minSecond);
 
-            if (TryGetRawLatestValueAtOrPreviousTick(propertyName, out var outputTick, out var rawOutput, TimeUtility.SecondToTick(minSecond), Settings.MaxTick, Settings.Filter) && rawOutput.HasValue)
+            double finalMinSecond = minSecond.HasValue ? minSecond.Value : TimeUtility.TickToSecond(Settings.MinTick);
+            double finalMaxSecond = maxSecond.HasValue ? maxSecond.Value : TimeUtility.TickToSecond(Settings.MaxTick);
+
+            switch (searchMode)
+            {
+                case SearchMode.At:
+                    if (minSecond.HasValue) Settings.ClampAndWarn(ref finalMinSecond);
+                    if (maxSecond.HasValue) Settings.ClampAndWarn(ref finalMaxSecond);
+                    break;
+                case SearchMode.AtOrNext:
+                    if (minSecond.HasValue) Settings.ClampMinAndWarn(ref finalMinSecond);
+                    break;
+                case SearchMode.AtOrPrevious:
+                    if (maxSecond.HasValue) Settings.ClampMaxAndWarn(ref finalMaxSecond);
+                    break;
+            }
+
+            int minTick = TimeUtility.SecondToTick(finalMinSecond);
+            int maxTick = TimeUtility.SecondToTick(finalMaxSecond);
+
+            if (TryGetRawLatestValue(propertyName, out int outputTick, out var rawOutput, minTick, maxTick, null, searchMode) && rawOutput.HasValue)
             {
                 outputSecond = TimeUtility.TickToSecond(outputTick);
 
@@ -54,62 +73,23 @@ namespace Tracking
                 }
             }
 
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-
-            output = default;
-            outputSecond = default;
-
-            return false;
-        }
-
-        public bool TryGetTypedLatestValueAtOrNextSecond<T>(string propertyName, double maxSecond, out double outputSecond, out T output, bool logError = false)
-        {
-            Settings?.ClampMaxAndWarn(ref maxSecond);
-
-
-            if (TryGetRawLatestValueAtOrNextTick(propertyName, out var outputTick, out var rawOutput, Settings.MinTick, TimeUtility.SecondToTick(maxSecond), filter: Settings.Filter) && rawOutput.HasValue)
+            string errorMessage = searchMode switch
             {
-                outputSecond = TimeUtility.TickToSecond(outputTick);
+                SearchMode.At => $"Can't find value for {propertyName} at second {finalMinSecond}. Returning default.",
+                SearchMode.AtOrNext => $"Can't find value for {propertyName} at or after second {finalMinSecond}. Returning default.",
+                SearchMode.AtOrPrevious => $"Can't find value for {propertyName} at or before second {finalMaxSecond}. Returning default.",
+                _ => "An unknown error occurred."
+            };
 
-                if (rawOutput.Value.Data.Data is T typedValue)
-                {
-                    output = typedValue;
-                    return true;
-                }
-                else
-                {
-                    Log.Error($"Unexpected type for {propertyName}. Expected {typeof(T)}, but found {rawOutput.Value.Data.Data.GetType()}. Returning default.");
-                }
-            }
+            if (logError) Log.Warning(errorMessage);
 
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-
-            outputSecond = default;
+            outputSecond = 0;
             output = default;
+
             return false;
         }
 
-        public bool TryGetTypedLatestValueAtSecond<T>(string propertyName, double second, out T output, bool logError = false)
-        {
-            Settings?.ClampAndWarn(ref second);
 
-            if (TryGetRawLatestValueAtTick(propertyName, TimeUtility.SecondToTick(second), out var rawOutput, filter: Settings.Filter) && rawOutput.HasValue)
-            {
-                if (rawOutput.Value.Data.Data is T typedValue)
-                {
-                    output = typedValue;
-                    return true;
-                }
-                else
-                {
-                    Log.Error($"Unexpected type for {propertyName}. Expected {typeof(T)}, but found {rawOutput.Value.Data.Data.GetType()}. Returning default.");
-                }
-            }
-
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-            output = default;
-            return false;
-        }
 
         #endregion
 
@@ -130,7 +110,6 @@ namespace Tracking
 
         public bool TryGetTypedDetailedValues<T>(string propertyName, out double outputSecond, out IEnumerable<(int Version, T Data)> output, SearchMode searchMode, double? minSecond = null, double? maxSecond = null, bool logError = false)
         {
-            outputSecond = 0; // Initialize to default
 
             double finalMinSecond = minSecond.HasValue ? minSecond.Value : TimeUtility.TickToSecond(Settings.MinTick);
             double finalMaxSecond = maxSecond.HasValue ? maxSecond.Value : TimeUtility.TickToSecond(Settings.MaxTick);
@@ -140,7 +119,7 @@ namespace Tracking
                 case SearchMode.At:
                     if (finalMinSecond != finalMaxSecond)
                     {
-                        Log.Warning($"In 'AtTick' mode, minSecond and maxSecond should be equal. Setting maxSecond to {finalMinSecond}.");
+                        Log.Warning($"In 'At' mode, minSecond and maxSecond should be equal. Setting maxSecond to {finalMinSecond}.");
                         finalMaxSecond = finalMinSecond; // In case of AtTick, maxSecond should be same as minSecond
                     }
                     if (minSecond.HasValue) Settings.ClampAndWarn(ref finalMinSecond);
@@ -174,7 +153,9 @@ namespace Tracking
 
             if (logError) Log.Warning(errorMessage);
 
+            outputSecond = 0;
             output = null;
+
             return false;
         }
 

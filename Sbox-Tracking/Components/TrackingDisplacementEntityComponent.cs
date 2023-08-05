@@ -11,7 +11,6 @@ namespace Sandbox.Components
     {
         [Net] protected Entity DisplacedEntity { get; set; }
 
-
         protected bool HasAuthroity => (Game.IsServer && IsServerOnly) 
             || (Game.IsServer && ShouldTransmit) 
             || (Game.IsClient && IsClientOnly);
@@ -58,6 +57,11 @@ namespace Sandbox.Components
             var displacementTime = Time.Now - 1;
 
 
+            using(var tracker = Tracker.ScopeBySecond(Time.Now - 1))
+            {
+                Log.Info(tracker.Count());
+            }
+
             // TODO: This logic just feels wrong and we should be doing something like "Second" here idk tho.
             
             using( var tracker = Tracker.ScopeBySeconds(displacementTime, Time.Now))
@@ -68,8 +72,6 @@ namespace Sandbox.Components
                 // Check if tracking data exists for both position and rotation at displacementTick
                 if (tracker.Exists( nameof(Entity.Position) ) && tracker.Exists( nameof(Entity.Rotation) ))
                 {
-                    
-
                     // Get the position and rotation of the Entity at displacementTick
                     var positionOfTracked = tracker.GetOrNextOrDefault<Vector3>(nameof(Entity.Position), displacementTime, lastKnownPosition).Data;
                     var rotationOfTracker = tracker.GetOrNextOrDefault<Rotation>(nameof(Entity.Rotation), displacementTime, lastKnownRotation).Data;

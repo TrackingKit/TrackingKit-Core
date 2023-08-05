@@ -37,12 +37,32 @@ namespace Tracking
 
         #region Typed TryGet Latest
 
-
-        public bool TryGetTypedLatestValueAtOrPreviousTick<T>(string propertyName, int minTick, out int outputTick, out T output, bool logError = false)
+        public bool TryGetTypedLatestValue<T>(string propertyName, SearchMode searchMode, out int outputTick, out T output, int? minTick = null, int? maxTick = null, bool logError = false)
         {
-            Settings.ClampMinAndWarn(ref minTick);
+            // Assign default values from Settings if not provided
+            int finalMinTick = minTick ?? Settings.MinTick;
+            int finalMaxTick = maxTick ?? Settings.MaxTick;
 
-            if (TryGetRawLatestValueAtOrPreviousTick(propertyName, out outputTick, out var rawOutput, minTick, Settings.MaxTick, Settings.Filter) && rawOutput.HasValue)
+            switch (searchMode)
+            {
+                case SearchMode.At:
+                    if (finalMinTick != finalMaxTick)
+                    {
+                        Log.Warning($"In 'At' mode, minTick and maxTick should be equal. Setting maxTick to {finalMinTick}.");
+                        finalMaxTick = finalMinTick; // In case of AtTick, maxTick should be same as minTick
+                    }
+                    Settings.ClampAndWarn(ref finalMinTick);
+                    Settings.ClampAndWarn(ref finalMaxTick);
+                    break;
+                case SearchMode.AtOrNext:
+                    Settings.ClampMinAndWarn(ref finalMinTick);
+                    break;
+                case SearchMode.AtOrPrevious:
+                    Settings.ClampMaxAndWarn(ref finalMaxTick);
+                    break;
+            }
+
+            if (TryGetRawLatestValue(propertyName, out outputTick, out var rawOutput, finalMinTick, finalMaxTick, Settings.Filter, searchMode) && rawOutput.HasValue)
             {
                 if (rawOutput.Value.Data.Data is T typedValue)
                 {
@@ -55,59 +75,24 @@ namespace Tracking
                 }
             }
 
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-
-            output = default;
-            return false;
-        }
-
-        public bool TryGetTypedLatestValueAtOrNextTick<T>(string propertyName, int maxTick, out int outputTick, out T output, bool logError = false)
-        {
-            Settings?.ClampMaxAndWarn(ref maxTick);
-
-
-            if (TryGetRawLatestValueAtOrNextTick(propertyName, out outputTick, out var rawOutput, Settings.MinTick, maxTick, filter: Settings.Filter) && rawOutput.HasValue)
+            string errorMessage = searchMode switch
             {
-                if (rawOutput.Value.Data.Data is T typedValue)
-                {
-                    output = typedValue;
-                    return true;
-                }
-                else
-                {
-                    Log.Error($"Unexpected type for {propertyName}. Expected {typeof(T)}, but found {rawOutput.Value.Data.Data.GetType()}. Returning default.");
-                }
-            }
+                SearchMode.At => $"Can't find value for {propertyName} at tick {finalMinTick}. Returning default.",
+                SearchMode.AtOrNext => $"Can't find value for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
+                SearchMode.AtOrPrevious => $"Can't find value for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
+                _ => "An unknown error occurred."
+            };
 
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
+            if (logError) Log.Warning(errorMessage);
 
+
+            outputTick = 0;
             output = default;
+
             return false;
         }
 
-        public bool TryGetTypedLatestValueAtTick<T>(string propertyName, int tick, out T output, bool logError = false)
-        {
-            var targetTick = tick;
 
-            Settings?.ClampAndWarn(ref targetTick);
-
-            if (TryGetRawLatestValueAtTick(propertyName, targetTick, out var rawOutput, filter: Settings.Filter) && rawOutput.HasValue)
-            {
-                if (rawOutput.Value.Data.Data is T typedValue)
-                {
-                    output = typedValue;
-                    return true;
-                }
-                else
-                {
-                    Log.Error($"Unexpected type for {propertyName}. Expected {typeof(T)}, but found {rawOutput.Value.Data.Data.GetType()}. Returning default.");
-                }
-            }
-
-            if (logError) Log.Warning($"Can't find value for {propertyName}. Returning default.");
-            output = default;
-            return false;
-        }
 
         #endregion
 
@@ -128,8 +113,6 @@ namespace Tracking
 
         public bool TryGetTypedDetailedValues<T>(string propertyName, out int outputTick, out IEnumerable<(int Version, T Data)> output, SearchMode searchMode, int? minTick = null, int? maxTick = null, bool logError = false)
         {
-            outputTick = 0;
-
             // Assign default values from Settings if not provided
             int finalMinTick = minTick ?? Settings.MinTick;
             int finalMaxTick = maxTick ?? Settings.MaxTick;
@@ -140,7 +123,7 @@ namespace Tracking
                     Settings.ClampAndWarn(ref finalMinTick);
                     if (finalMinTick != finalMaxTick)
                     {
-                        Log.Warning("System issue: In 'AtTick' mode, minTick and maxTick should be equal. Setting maxTick to minTick.");
+                        Log.Warning("System issue: In 'At' mode, minTick and maxTick should be equal. Setting maxTick to minTick.");
                         finalMaxTick = finalMinTick; // In case of AtTick, maxTick should be same as minTick
                     }
                     break;
@@ -168,7 +151,9 @@ namespace Tracking
 
             if (logError) Log.Warning(errorMessage);
 
+            outputTick = 0;
             output = null;
+
             return false;
         }
 

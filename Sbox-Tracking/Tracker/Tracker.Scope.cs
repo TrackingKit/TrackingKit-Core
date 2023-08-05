@@ -17,12 +17,13 @@ namespace Tracking
 
         #region Tick(s)
 
-        [Obsolete("Not implemented yet.")]
         public ScopedTickTracker ScopeByTick(int specificTick, TagFilter filter = default)
         {
+            ScopedTickSettings scopedSettings = new(specificTick, specificTick, filter);
 
-            return default;
-            //return new ScopedTickTracker(Data);
+
+
+            return new ScopedTickTracker(Data, scopedSettings);
         }
 
 
@@ -57,9 +58,25 @@ namespace Tracking
 
         #region Second(s)
 
+        // TODO: Better comment.
+
+        /// <summary>
+        /// This will get closest tick.
+        /// </summary>
+        /// <param name="second"></param>
+        /// <param name="filter"></param>
+        /// <returns></returns>
+        public ScopedSecondTracker ScopeBySecond(float second, TagFilter filter = default)
+        {
+            ScopedSecondSettings scopedSettings = new(second, second, filter);
+
+            return new ScopedSecondTracker(Data, scopedSettings);
+        }
+
+
         public ScopedSecondsTracker ScopeBySeconds(TagFilter filter = default)
         {
-            ScopedSecondSettings scopedSettings = new(float.MinValue, float.MaxValue, filter);
+            ScopedSecondSettings scopedSettings = new((float)TimeUtility.MinSecondRecorded, (float)TimeUtility.MaxSecondRecorded, filter);
 
             return new ScopedSecondsTracker(Data, scopedSettings);
         }

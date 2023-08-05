@@ -19,6 +19,11 @@ namespace Tracking
 
         public static double TickToSecond(int tick)
         {
+            if(tick >= Seconds[Seconds.Count - 1].Value)
+            {
+                return Time.Now;
+            }
+
             CheckBoundsForTick(tick, out int index, out var lowerTicks, out var upperTicks);
 
             return Interpolate(lowerTicks.Key, upperTicks.Key, lowerTicks.Value, upperTicks.Value, tick);
@@ -26,6 +31,11 @@ namespace Tracking
 
         public static int SecondToTick(double second)
         {
+            if(second >= Seconds[Seconds.Count - 1].Key)
+            {
+                return Time.Tick;
+            }
+
             CheckBoundsForSecond(second, out int index, out var lowerClosestSecond, out var upperClosestSecond);
 
             return (int)Math.Round(Interpolate(lowerClosestSecond.Value, upperClosestSecond.Value, lowerClosestSecond.Key, upperClosestSecond.Key, second));
@@ -39,7 +49,7 @@ namespace Tracking
 
             if (Seconds.Count > MAX_RECORDS)
             {
-                DisperseOlderData();
+                //DisperseOlderData();
             }
 
             MinSecondRecorded = Math.Min(MinSecondRecorded, currentTime);

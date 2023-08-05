@@ -33,7 +33,7 @@ namespace Tracking
 
         private T GetInternal<T>(string propertyName, int tick, bool logError, T defaultValue = default)
         {
-            if (DataHelper.TryGetTypedLatestValueAtTick<T>(propertyName, targetTick, out var result, logError: logError))
+            if (DataHelper.TryGetTypedLatestValue<T>(propertyName, SearchMode.At, out _, out var result, minTick: tick, maxTick: tick, logError: logError))
             {
                 return result;
             }

@@ -102,75 +102,7 @@ namespace Tracking
         #region Raw TryGet Latest
 
 
-        // TODO Count one? check hash if need to do again etc
-
-        protected bool TryGetRawLatestValueAtTick(string propertyName, int tick, out (int Version, TrackerMetaData Data)? output, IReadOnlyTagFilter filter)
-        {
-            if (Storage.TryGetPropertyValue(
-                propertyName, out var value, minTick: tick, maxTick: tick,
-                shouldInclude: x => (filter?.ShouldIncludes(x.Tags) ?? true)))
-            {
-                if (value.TryGetValue(tick, out var trackerMetaData) && trackerMetaData.Count > 0)
-                {
-                    // Get the highest key value directly
-                    var highestKey = trackerMetaData.Keys.Max();
-                    var correspondingValue = trackerMetaData[highestKey];
-
-                    // Assuming you want to use highestKey as Version
-                    output = (highestKey, correspondingValue);
-                    return true;
-                }
-            }
-
-            output = null;
-            return false;
-        }
-
-
-
-
-        protected bool TryGetRawLatestValueAtOrNextTick(string propertyName, out int outputTick, out (int Version, TrackerMetaData Data)? output, int minTick, int maxTick, IReadOnlyTagFilter filter)
-        {
-            outputTick = 0; // Initialize outputTick
-
-            int? lastTick = null;
-
-            Func<StopConditionInformation, bool> stopCondition = info => info.AccumulatedSoFar > 0 && (lastTick.HasValue && lastTick.Value != info.Tick);
-
-            Func<TrackerInformation, bool> shouldInclude = x =>
-            {
-                if (lastTick.HasValue && lastTick.Value != x.Tick)
-                {
-                    return false;
-                }
-
-                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
-                if (result)
-                {
-                    lastTick = x.Tick;
-                }
-                return result;
-            };
-
-            if (Storage.TryGetPropertyValue(propertyName, out var value, minTick: minTick, maxTick: maxTick, shouldInclude: shouldInclude, stopCondition: stopCondition))
-            {
-                if (value.Keys.Count() == 1 && value.TryGetValue(value.Keys.First(), out var trackerMetaData) && trackerMetaData.Count > 0)
-                {
-                    var highestKey = trackerMetaData.Keys.Max();
-                    var correspondingValue = trackerMetaData[highestKey];
-
-                    output = (highestKey, correspondingValue);
-                    outputTick = value.Keys.First(); // Set the outputTick value
-                    return true;
-                }
-            }
-
-            output = null;
-            return false;
-        }
-
-
-        protected bool TryGetRawLatestValueAtOrPreviousTick(string propertyName, out int outputTick, out (int Version, TrackerMetaData Data)? output, int minTick, int maxTick, IReadOnlyTagFilter filter)
+        protected bool TryGetRawLatestValue(string propertyName, out int outputTick, out (int Version, TrackerMetaData Data)? output, int minTick, int maxTick, IReadOnlyTagFilter filter, SearchMode searchMode)
         {
             outputTick = 0; // Initialize outputTick
             int? lastTick = null;
@@ -192,7 +124,14 @@ namespace Tracking
                 return result;
             };
 
-            if (Storage.TryGetPropertyValue(propertyName, out var value, minTick: minTick, maxTick: maxTick, shouldInclude: shouldInclude, stopCondition: stopCondition, ascending: false))
+            bool ascending = searchMode != SearchMode.AtOrPrevious;
+
+            if (searchMode == SearchMode.At)
+            {
+                minTick = maxTick;
+            }
+
+            if (Storage.TryGetPropertyValue(propertyName, out var value, minTick: minTick, maxTick: maxTick, shouldInclude: shouldInclude, stopCondition: stopCondition, ascending: ascending))
             {
                 if (value.Keys.Count() == 1 && value.TryGetValue(value.Keys.First(), out var trackerMetaData) && trackerMetaData.Count > 0)
                 {
@@ -208,7 +147,6 @@ namespace Tracking
             output = null;
             return false;
         }
-
 
 
 
@@ -274,115 +212,6 @@ namespace Tracking
             AtOrNext,
             AtOrPrevious
         }
-
-
-        [Obsolete("Too specific")]
-        protected bool TryGetRawDetailedValueAtTick(string propertyName, int tick, out IEnumerable<(int Version, TrackerMetaData Data)> output, IReadOnlyTagFilter filter)
-        {
-            if (Storage.TryGetPropertyValue(
-                propertyName, out var value, minTick: tick, maxTick: tick,
-                shouldInclude: x => (filter?.ShouldIncludes(x.Tags) ?? true)))
-            {
-                if (value.TryGetValue(tick, out var trackerMetaData) && trackerMetaData.Count > 0)
-                {
-                    output = trackerMetaData.Select(kvp => (Version: kvp.Key, Data: kvp.Value)).ToList();
-                    return true;
-                }
-            }
-
-            output = null;
-            return false;
-        }
-
-        [Obsolete("Too specific")]
-        protected bool TryGetRawDetailedValuesAtOrNextTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick, IReadOnlyTagFilter filter)
-        {
-            outputTick = 0; // Initialize outputTick
-            int? lastTick = null;
-            List<(int Version, TrackerMetaData Data)> results = new List<(int Version, TrackerMetaData Data)>();
-
-            Func<StopConditionInformation, bool> stopCondition = info => info.AccumulatedSoFar > 0 && (lastTick.HasValue && lastTick.Value != info.Tick);
-
-            Func<TrackerInformation, bool> shouldInclude = x =>
-            {
-                if (lastTick.HasValue && lastTick.Value != x.Tick)
-                {
-                    return false;
-                }
-
-                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
-
-                if (result)
-                {
-                    lastTick = x.Tick;
-                }
-                return result;
-            };
-
-            if (Storage.TryGetPropertyValue(propertyName, out var value, minTick: minTick, maxTick: maxTick, shouldInclude: shouldInclude, stopCondition: stopCondition))
-            {
-                var firstTickData = value.FirstOrDefault();
-                if (firstTickData.Value != null)
-                {
-                    results.AddRange(firstTickData.Value.Select(kvp => (Version: kvp.Key, Data: kvp.Value)));
-                    outputTick = firstTickData.Key; // Set the outputTick value
-                }
-            }
-
-            if (results.Any())
-            {
-                output = results;
-                return true;
-            }
-
-            output = null;
-            return false;
-        }
-
-        [Obsolete("Too specific")]
-        protected bool TryGetRawDetailedValuesAtOrPreviousTick(string propertyName, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, int minTick, int maxTick, IReadOnlyTagFilter filter)
-        {
-            outputTick = 0; // Initialize outputTick
-            int? lastTick = null;
-            List<(int Version, TrackerMetaData Data)> results = new List<(int Version, TrackerMetaData Data)>();
-
-            Func<StopConditionInformation, bool> stopCondition = info => info.AccumulatedSoFar > 0 && (lastTick.HasValue && lastTick.Value != info.Tick);
-
-            Func<TrackerInformation, bool> shouldInclude = x =>
-            {
-                if (lastTick.HasValue && lastTick.Value != x.Tick)
-                {
-                    return false;
-                }
-
-                bool result = filter?.ShouldIncludes(x.Tags) ?? true;
-                if (result)
-                {
-                    lastTick = x.Tick;
-                }
-                return result;
-            };
-
-            if (Storage.TryGetPropertyValue(propertyName, out var value, minTick: minTick, maxTick: maxTick, shouldInclude: shouldInclude, stopCondition: stopCondition, ascending: false))
-            {
-                var firstTickData = value.FirstOrDefault();
-                if (firstTickData.Value != null)
-                {
-                    results.AddRange(firstTickData.Value.Select(kvp => (Version: kvp.Key, Data: kvp.Value)));
-                    outputTick = firstTickData.Key; // Set the outputTick value
-                }
-            }
-
-            if (results.Any())
-            {
-                output = results;
-                return true;
-            }
-
-            output = null;
-            return false;
-        }
-
 
 
         #endregion
