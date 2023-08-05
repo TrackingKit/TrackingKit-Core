@@ -51,7 +51,7 @@ namespace Tracking
 
         private IEnumerable<(int Version, T Value)> GetDetailedInternal<T>(string propertyName, int targetTick, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out _, out var value, TickSearchMode.AtTick, minTick: targetTick, maxTick: targetTick, logError: logError))
+            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out _, out var value, SearchMode.At, minTick: targetTick, maxTick: targetTick, logError: logError))
             {
                 return value;
             }

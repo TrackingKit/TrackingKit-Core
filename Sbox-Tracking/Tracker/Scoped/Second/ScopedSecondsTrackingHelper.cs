@@ -128,7 +128,7 @@ namespace Tracking
             }
         }
 
-        public bool TryGetTypedDetailedValues<T>(string propertyName, out double outputSecond, out IEnumerable<(int Version, T Data)> output, TickSearchMode searchMode, double? minSecond = null, double? maxSecond = null, bool logError = false)
+        public bool TryGetTypedDetailedValues<T>(string propertyName, out double outputSecond, out IEnumerable<(int Version, T Data)> output, SearchMode searchMode, double? minSecond = null, double? maxSecond = null, bool logError = false)
         {
             outputSecond = 0; // Initialize to default
 
@@ -137,7 +137,7 @@ namespace Tracking
 
             switch (searchMode)
             {
-                case TickSearchMode.AtTick:
+                case SearchMode.At:
                     if (finalMinSecond != finalMaxSecond)
                     {
                         Log.Warning($"In 'AtTick' mode, minSecond and maxSecond should be equal. Setting maxSecond to {finalMinSecond}.");
@@ -146,10 +146,10 @@ namespace Tracking
                     if (minSecond.HasValue) Settings.ClampAndWarn(ref finalMinSecond);
                     if (maxSecond.HasValue) Settings.ClampAndWarn(ref finalMaxSecond);
                     break;
-                case TickSearchMode.AtOrNextTick:
+                case SearchMode.AtOrNext:
                     if (minSecond.HasValue) Settings.ClampMinAndWarn(ref finalMinSecond);
                     break;
-                case TickSearchMode.AtOrPreviousTick:
+                case SearchMode.AtOrPrevious:
                     if (maxSecond.HasValue) Settings.ClampMaxAndWarn(ref finalMaxSecond);
                     break;
             }
@@ -166,9 +166,9 @@ namespace Tracking
 
             string errorMessage = searchMode switch
             {
-                TickSearchMode.AtTick => $"Can't find values for {propertyName} at second {finalMinSecond}. Returning default.",
-                TickSearchMode.AtOrNextTick => $"Can't find values for {propertyName} between seconds {finalMinSecond} and {finalMaxSecond}. Returning default.",
-                TickSearchMode.AtOrPreviousTick => $"Can't find values for {propertyName} between seconds {finalMinSecond} and {finalMaxSecond}. Returning default.",
+                SearchMode.At => $"Can't find values for {propertyName} at second {finalMinSecond}. Returning default.",
+                SearchMode.AtOrNext => $"Can't find values for {propertyName} between seconds {finalMinSecond} and {finalMaxSecond}. Returning default.",
+                SearchMode.AtOrPrevious => $"Can't find values for {propertyName} between seconds {finalMinSecond} and {finalMaxSecond}. Returning default.",
                 _ => "An unknown error occurred."
             };
 

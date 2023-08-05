@@ -217,7 +217,7 @@ namespace Tracking
 
         #region Raw TryGet Detailed
 
-        protected bool TryGetRawDetailedValues(string propertyName, int minTick, int maxTick, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, IReadOnlyTagFilter filter, TickSearchMode searchMode)
+        protected bool TryGetRawDetailedValues(string propertyName, int minTick, int maxTick, out int outputTick, out IEnumerable<(int Version, TrackerMetaData Data)> output, IReadOnlyTagFilter filter, SearchMode searchMode)
         {
             outputTick = 0; // Initialize outputTick
             List<(int Version, TrackerMetaData Data)> results = new List<(int Version, TrackerMetaData Data)>();
@@ -241,9 +241,9 @@ namespace Tracking
                 return result;
             };
 
-            bool ascending = searchMode != TickSearchMode.AtOrPreviousTick;
+            bool ascending = searchMode != SearchMode.AtOrPrevious;
 
-            if (searchMode == TickSearchMode.AtTick)
+            if (searchMode == SearchMode.At)
             {
                 minTick = maxTick;
             }
@@ -268,11 +268,11 @@ namespace Tracking
             return false;
         }
 
-        public enum TickSearchMode
+        public enum SearchMode
         {
-            AtTick,
-            AtOrNextTick,
-            AtOrPreviousTick
+            At,
+            AtOrNext,
+            AtOrPrevious
         }
 
 

@@ -97,7 +97,7 @@ namespace Tracking
 
         private IEnumerable<(int Version, T Value)> GetDetailedInternal<T>(string propertyName, double second, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out _, out var value, TickSearchMode.AtTick, minSecond: second, maxSecond: second, logError: logError))
+            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out _, out var value, SearchMode.At, minSecond: second, maxSecond: second, logError: logError))
             {
                 return value;
             }
@@ -121,7 +121,7 @@ namespace Tracking
 
         private (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrPreviousInternal<T>(string propertyName, double second, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out var secondResult, out var value, TickSearchMode.AtOrPreviousTick, maxSecond: second, logError: logError))
+            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out var secondResult, out var value, SearchMode.AtOrPrevious, maxSecond: second, logError: logError))
             {
                 return (secondResult, value);
             }
@@ -144,7 +144,7 @@ namespace Tracking
 
         private (double Second, IEnumerable<(int Version, T Value)> Data) GetDetailedOrNextInternal<T>(string propertyName, double second, bool logError, IEnumerable<(int Version, T Value)> defaultValue = default)
         {
-            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out var secondResult, out var value, TickSearchMode.AtOrNextTick, minSecond: second, logError: logError))
+            if (DataHelper.TryGetTypedDetailedValues<T>(propertyName, out var secondResult, out var value, SearchMode.AtOrNext, minSecond: second, logError: logError))
             {
                 return (secondResult, value);
             }

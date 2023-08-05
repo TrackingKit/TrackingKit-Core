@@ -126,7 +126,7 @@ namespace Tracking
             }
         }
 
-        public bool TryGetTypedDetailedValues<T>(string propertyName, out int outputTick, out IEnumerable<(int Version, T Data)> output, TickSearchMode searchMode, int? minTick = null, int? maxTick = null, bool logError = false)
+        public bool TryGetTypedDetailedValues<T>(string propertyName, out int outputTick, out IEnumerable<(int Version, T Data)> output, SearchMode searchMode, int? minTick = null, int? maxTick = null, bool logError = false)
         {
             outputTick = 0;
 
@@ -136,7 +136,7 @@ namespace Tracking
 
             switch (searchMode)
             {
-                case TickSearchMode.AtTick:
+                case SearchMode.At:
                     Settings.ClampAndWarn(ref finalMinTick);
                     if (finalMinTick != finalMaxTick)
                     {
@@ -144,10 +144,10 @@ namespace Tracking
                         finalMaxTick = finalMinTick; // In case of AtTick, maxTick should be same as minTick
                     }
                     break;
-                case TickSearchMode.AtOrNextTick:
+                case SearchMode.AtOrNext:
                     Settings.ClampMinAndWarn(ref finalMinTick);
                     break;
-                case TickSearchMode.AtOrPreviousTick:
+                case SearchMode.AtOrPrevious:
                     Settings.ClampMaxAndWarn(ref finalMaxTick);
                     break;
             }
@@ -160,9 +160,9 @@ namespace Tracking
 
             string errorMessage = searchMode switch
             {
-                TickSearchMode.AtTick => $"Can't find values for {propertyName} at tick {finalMinTick}. Returning default.",
-                TickSearchMode.AtOrNextTick => $"Can't find values for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
-                TickSearchMode.AtOrPreviousTick => $"Can't find values for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
+                SearchMode.At => $"Can't find values for {propertyName} at tick {finalMinTick}. Returning default.",
+                SearchMode.AtOrNext => $"Can't find values for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
+                SearchMode.AtOrPrevious => $"Can't find values for {propertyName} between ticks {finalMinTick} and {finalMaxTick}. Returning default.",
                 _ => "An unknown error occurred."
             };
 
