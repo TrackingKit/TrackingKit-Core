@@ -10,11 +10,11 @@ namespace Tracking
 {
     public sealed class ScopedTickTracker : IDisposable
     {
-        private readonly ScopedTicksTrackingHelper DataHelper;
+        private readonly ScopedTrackingHelperUserHandle DataHelper;
 
         private readonly int targetTick;
 
-        internal ScopedTickTracker(TrackerStorage data, ScopedTickSettings scopedSettings)
+        internal ScopedTickTracker(TrackerStorage data, ScopedSettings scopedSettings)
         {
             targetTick = scopedSettings.MinTick;
 
@@ -26,7 +26,7 @@ namespace Tracking
             => DataHelper.Count();
 
         public bool Exists(string propertyName)
-            => DataHelper.PropertyExists(propertyName);
+            => DataHelper.Exists(propertyName);
 
         public bool Exists()
             => DataHelper.Exists();

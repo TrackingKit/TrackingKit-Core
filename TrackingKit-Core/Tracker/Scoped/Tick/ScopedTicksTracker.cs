@@ -15,9 +15,9 @@ namespace Tracking
     /// </summary>
     public partial class ScopedTicksTracker : IDisposable
     {
-        private ScopedTicksTrackingHelper DataHelper { get; }
+        private ScopedTrackingHelperUserHandle DataHelper { get; }
 
-        internal ScopedTicksTracker(TrackerStorage data, ScopedTickSettings scopedSettings)
+        internal ScopedTicksTracker(TrackerStorage data, ScopedSettings scopedSettings)
         {
             DataHelper = new(data, scopedSettings);
 
@@ -35,7 +35,7 @@ namespace Tracking
             => DataHelper.Exists();
 
         public bool Exists(string propertyName)
-            => DataHelper.PropertyExists(propertyName);
+            => DataHelper.Exists(propertyName);
 
 
 

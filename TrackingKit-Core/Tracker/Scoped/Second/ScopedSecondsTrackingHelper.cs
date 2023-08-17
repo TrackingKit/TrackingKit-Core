@@ -11,7 +11,7 @@ namespace Tracking
     {
         private readonly ScopedSecondSettings Settings;
 
-        private readonly ScopedTicksTrackingHelper Helper;
+        private readonly ScopedTrackingHelperUserHandle Helper;
 
         internal ScopedSecondsTrackingHelper(TrackerStorage storageData, ScopedSecondSettings scopedSecondSettings) : base(storageData)
         {

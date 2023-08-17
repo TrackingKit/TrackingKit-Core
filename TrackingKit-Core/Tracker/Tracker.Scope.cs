@@ -19,7 +19,7 @@ namespace Tracking
 
         public ScopedTickTracker ScopeByTick(int specificTick, TagFilter filter = default)
         {
-            ScopedTickSettings scopedSettings = new(specificTick, specificTick, filter);
+            ScopedSettings scopedSettings = new(specificTick, specificTick, filter);
 
 
 
@@ -30,7 +30,7 @@ namespace Tracking
         public ScopedTicksTracker ScopeByTicks(int minTick, int maxTick, TagFilter filter = default)
         {
 
-            ScopedTickSettings scopedSettings = new(minTick, maxTick, filter);
+            ScopedSettings scopedSettings = new(minTick, maxTick, filter);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
@@ -39,7 +39,7 @@ namespace Tracking
         public ScopedTicksTracker ScopeByTicks(TagFilter filter = default)
         {
 
-            ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue, filter);
+            ScopedSettings scopedSettings = new(int.MinValue, int.MaxValue, filter);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
@@ -48,7 +48,7 @@ namespace Tracking
         public ScopedTicksTracker ScopeByTicks()
         {
 
-            ScopedTickSettings scopedSettings = new(int.MinValue, int.MaxValue);
+            ScopedSettings scopedSettings = new(int.MinValue, int.MaxValue);
 
             return new ScopedTicksTracker(Data, scopedSettings);
         }
