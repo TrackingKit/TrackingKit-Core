@@ -4,9 +4,9 @@ namespace Tracking
 {
     public class TrackerEventArgs : EventArgs
     {
-        public Tracker Tracker { get; }
+        public DynamicTracker Tracker { get; }
 
-        public TrackerEventArgs(Tracker tracker)
+        public TrackerEventArgs(DynamicTracker tracker)
         {
             Tracker = tracker ?? throw new ArgumentNullException(nameof(tracker));
         }
@@ -19,12 +19,12 @@ namespace Tracking
         public static event EventHandler<TrackerEventArgs>? Removed;
 
         // Methods to raise events
-        public static void OnAdded(Tracker tracker)
+        public static void OnAdded(DynamicTracker tracker)
         {
             Added?.Invoke(null, new TrackerEventArgs(tracker));
         }
 
-        public static void OnRemoved(Tracker tracker)
+        public static void OnRemoved(DynamicTracker tracker)
         {
             Removed?.Invoke(null, new TrackerEventArgs(tracker));
         }

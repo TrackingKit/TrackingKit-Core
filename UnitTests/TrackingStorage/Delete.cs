@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Numerics;
+using Xunit;
 
 namespace Tracking.UnitTests.TrackingStorage
 {
@@ -7,7 +8,7 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void RemoveValues_ValidInput_ReturnsTrueAndRemovesData()
         {
-            var storage = new TrackerStorage();
+            var storage = new InMemoryTrackerStorage();
             storage.SetValue("testProperty", 1, 1, "value1", new[] { "tag1", "tag2" });
 
             bool result = storage.RemoveValues("testProperty", 1);
@@ -18,9 +19,11 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void RemoveValues_InvalidPropertyName_ReturnsFalse()
         {
-            var storage = new TrackerStorage();
+            object obj = new();
 
-            bool result = storage.RemoveValues("invalidProperty", 1);
+            var trackingSystem = TrackerSystem.GetOrRegister(obj);
+
+            trackingSystem.
 
             Assert.False(result);
         }
@@ -28,7 +31,7 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void RemoveSpecificValue_ValidInput_ReturnsTrueAndRemovesData()
         {
-            var storage = new TrackerStorage();
+            var storage = new InMemoryTrackerStorage();
             storage.SetValue("testProperty", 1, 1, "value1", new[] { "tag1", "tag2" });
 
             bool result = storage.RemoveSpecificValue("testProperty", 1, 1);
@@ -40,7 +43,7 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void RemoveSpecificValue_InvalidPropertyName_ReturnsFalse()
         {
-            var storage = new TrackerStorage();
+            var storage = new InMemoryTrackerStorage();
 
             bool result = storage.RemoveSpecificValue("invalidProperty", 1, 1);
 

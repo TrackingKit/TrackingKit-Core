@@ -5,7 +5,11 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackingKit-Core", "TrackingKit-Core.csproj", "{4393304C-2B82-458B-92F0-614DFEC4F1E4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NestedDictionary", "..\NET-NestedDictionary\NestedDictionary.csproj", "{ECE0B880-21A7-4D80-94A3-BF9602CAB354}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompositeDictionary", "..\NET-NestedDictionary\CompositeDictionary.csproj", "{ECE0B880-21A7-4D80-94A3-BF9602CAB354}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChronoSync", "..\TimeUnitConversion\ChronoSync.csproj", "{9D4CC880-986E-424F-A1C8-AD1711417F92}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackingRosyln", "..\TrackingRosyln\TrackingRosyln.csproj", "{7900D12C-B510-460A-88E4-1E59C7381BD5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{ECE0B880-21A7-4D80-94A3-BF9602CAB354}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ECE0B880-21A7-4D80-94A3-BF9602CAB354}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ECE0B880-21A7-4D80-94A3-BF9602CAB354}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D4CC880-986E-424F-A1C8-AD1711417F92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D4CC880-986E-424F-A1C8-AD1711417F92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D4CC880-986E-424F-A1C8-AD1711417F92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D4CC880-986E-424F-A1C8-AD1711417F92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7900D12C-B510-460A-88E4-1E59C7381BD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7900D12C-B510-460A-88E4-1E59C7381BD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7900D12C-B510-460A-88E4-1E59C7381BD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7900D12C-B510-460A-88E4-1E59C7381BD5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

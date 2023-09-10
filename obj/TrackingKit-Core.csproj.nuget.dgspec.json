@@ -4,12 +4,12 @@
     "G:\\t1758\\Desktop\\Programming\\TrackingKit\\TrackingKit-Core\\TrackingKit-Core.csproj": {}
   },
   "projects": {
-    "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\NestedDictionary.csproj": {
+    "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\CompositeDictionary.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\NestedDictionary.csproj",
-        "projectName": "NestedDictionary",
-        "projectPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\NestedDictionary.csproj",
+        "projectUniqueName": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\CompositeDictionary.csproj",
+        "projectName": "CompositeDictionary",
+        "projectPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\CompositeDictionary.csproj",
         "packagesPath": "C:\\Users\\t1758\\.nuget\\packages\\",
         "outputPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\obj\\",
         "projectStyle": "PackageReference",
@@ -99,8 +99,11 @@
           "net7.0": {
             "targetAlias": "net7.0",
             "projectReferences": {
-              "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\NestedDictionary.csproj": {
-                "projectPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\NestedDictionary.csproj"
+              "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\CompositeDictionary.csproj": {
+                "projectPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\NET-NestedDictionary\\CompositeDictionary.csproj"
+              },
+              "G:\\t1758\\Desktop\\Programming\\TrackingKit\\TrackingRosyln\\TrackingRosyln.csproj": {
+                "projectPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\TrackingRosyln\\TrackingRosyln.csproj"
               }
             }
           }
@@ -115,6 +118,14 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[4.7.0, )"
+            },
+            "Microsoft.CodeAnalysis.Common": {
+              "target": "Package",
+              "version": "[4.7.0, )"
+            },
             "Microsoft.NET.Test.Sdk": {
               "target": "Package",
               "version": "[17.7.0, )"
@@ -128,6 +139,73 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[2.5.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.306\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "G:\\t1758\\Desktop\\Programming\\TrackingKit\\TrackingRosyln\\TrackingRosyln.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\TrackingRosyln\\TrackingRosyln.csproj",
+        "projectName": "TrackingRosyln",
+        "projectPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\TrackingRosyln\\TrackingRosyln.csproj",
+        "packagesPath": "C:\\Users\\t1758\\.nuget\\packages\\",
+        "outputPath": "G:\\t1758\\Desktop\\Programming\\TrackingKit\\TrackingRosyln\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\t1758\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0": {
+            "targetAlias": "net7.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net7.0": {
+          "targetAlias": "net7.0",
+          "dependencies": {
+            "Microsoft.CodeAnalysis.Analyzers": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[3.3.4, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[4.7.0, )"
             }
           },
           "imports": [

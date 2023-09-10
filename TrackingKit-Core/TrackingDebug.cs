@@ -38,7 +38,7 @@ namespace Tracking
             // Detailed
             if (objRefExists && TrackerSystem.Get(item) != null)
             {
-                Tracker tracker = TrackerSystem.Get(item);
+                DynamicTracker tracker = TrackerSystem.Get(item);
 
                 currentLine++;
 

@@ -1,0 +1,5 @@
+G:\t1758\Desktop\Programming\TrackingKit\TrackingKit-Core\obj\Release\net7.0\TrackingKit-Core.csproj.AssemblyReference.cache
+G:\t1758\Desktop\Programming\TrackingKit\TrackingKit-Core\obj\Release\net7.0\TrackingKit-Core.GeneratedMSBuildEditorConfig.editorconfig
+G:\t1758\Desktop\Programming\TrackingKit\TrackingKit-Core\obj\Release\net7.0\TrackingKit-Core.AssemblyInfoInputs.cache
+G:\t1758\Desktop\Programming\TrackingKit\TrackingKit-Core\obj\Release\net7.0\TrackingKit-Core.AssemblyInfo.cs
+G:\t1758\Desktop\Programming\TrackingKit\TrackingKit-Core\obj\Release\net7.0\TrackingKit-Core.csproj.CoreCompileInputs.cache

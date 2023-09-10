@@ -3,27 +3,32 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tracking;
+using TrackingKit_Core;
 
 namespace Tracking
 {
     public static partial class TrackerSystem
     {
-        private static Dictionary<WeakReference<object>, Tracker> Values { get; set; } = new();
+        private static Dictionary<WeakReference<object>, ITracker> Values { get; set; } = new();
 
-        public static void Register<T>(T obj) where T : class
+        public static void Register(object obj) 
+            => Register<string>(obj);
+
+        public static void Register<TKey>(object obj)
+            where TKey : IEquatable<TKey>
         {
             var weakReference = new WeakReference<object>(obj);
 
             if (!Values.Keys.Any(wr => wr.TryGetTarget(out var target) && Equals(target, obj)))
             {
-                var tracker = new Tracker();
+                var tracker = new Tracker<TKey>(TrackerStorageType.InMemory);
                 Values.Add(weakReference, tracker);
 
-                TrackerEvents.OnAdded(tracker);
+                //TrackerEvents.OnAdded(tracker);
             }
         }
 
-        public static void Unregister<T>(T obj) where T : class
+        public static void Unregister(object obj)
         {
             var weakReference = Values.Keys.FirstOrDefault(wr => wr.TryGetTarget(out var target) && Equals(target, obj));
 
@@ -64,21 +69,21 @@ namespace Tracking
             }
         }
 
-        public static Tracker Get<T>(T obj) where T : class
+        public static Tracker<string> Get<T>(T obj) where T : class
         {
             var weakReference = Values.Keys.FirstOrDefault(wr => wr.TryGetTarget(out var target) && Equals(target, obj));
 
             return weakReference != null ? Values[weakReference] : null;
         }
 
-        public static Tracker GetOrRegister<T>(T obj) where T : class
+        public static Tracker<string> GetOrRegister<T>(T obj) where T : class
         {
             var weakReference = Values.Keys.FirstOrDefault(wr => wr.TryGetTarget(out var target) && Equals(target, obj));
 
             if (weakReference == null)
             {
                 weakReference = new WeakReference<object>(obj);
-                var tracker = new Tracker();
+                var tracker = new DynamicTracker();
 
                 Values.Add(weakReference, tracker);
 
@@ -91,10 +96,10 @@ namespace Tracking
         public static void Clear() 
             => Values.Clear();
 
-        internal static IEnumerable<(object key, Tracker obj)> GetAll()
+        internal static IEnumerable<(object key, ITracker obj)> GetAll()
         {
             // Create a list to store the results
-            var results = new List<(object key, Tracker obj)>();
+            var results = new List<(object key, DynamicTracker obj)>();
 
             // Loop over the dictionary
             foreach (var pair in Values)

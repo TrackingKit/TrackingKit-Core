@@ -4,7 +4,7 @@ namespace Tracking.UnitTests.TrackingStorage
 {
     public class RetrievalTests
     {
-        private void PopulateStorage(TrackerStorage storage, int propertiesCount, int ticksCount, int versionsCount, int tagsCount)
+        private void PopulateStorage(InMemoryTrackerStorage storage, int propertiesCount, int ticksCount, int versionsCount, int tagsCount)
         {
             for (int p = 1; p <= propertiesCount; p++)
             {
@@ -22,7 +22,7 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void TryGetLatestVersion_WithLargeData_ReturnsCorrectVersion()
         {
-            var storage = new TrackerStorage();
+            var storage = new InMemoryTrackerStorage();
             PopulateStorage(storage, 10, 10, 10, 5);
 
             bool result = storage.TryGetLatestVersion("property5", 5, out var latestVersion);
@@ -34,7 +34,7 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void TryGetVersions_WithLargeData_ReturnsAllVersions()
         {
-            var storage = new TrackerStorage();
+            var storage = new InMemoryTrackerStorage();
             PopulateStorage(storage, 10, 10, 10, 5);
 
             bool result = storage.TryGetVersions("property5", 5, out var versions);
@@ -48,10 +48,10 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void Clone_WithLargeData_CreatesDeepCopy()
         {
-            var storage = new TrackerStorage();
+            var storage = new InMemoryTrackerStorage();
             PopulateStorage(storage, 10, 10, 10, 5);
 
-            var cloned = (TrackerStorage)storage.Clone();
+            var cloned = (InMemoryTrackerStorage)storage.Clone();
             cloned.SetValue("property5", 5, 11, "new-value");
 
             bool originalResult = storage.TryGetLatestVersion("property5", 5, out var originalVersion);

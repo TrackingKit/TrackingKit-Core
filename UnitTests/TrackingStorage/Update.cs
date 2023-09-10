@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using TrackingKit_Core.TrackingKit_Core.Factories;
 using Xunit;
 
 namespace Tracking.UnitTests.TrackingStorage
@@ -20,9 +21,32 @@ namespace Tracking.UnitTests.TrackingStorage
         [Fact]
         public void SetValue_InvalidPropertyName_ThrowsArgumentException()
         {
-            var storage = new TrackerStorage();
+            var storage = new InMemoryTrackerStorage();
 
             Assert.Throws<System.ArgumentException>(() => storage.SetValue("", 1, 1, "value"));
+        }
+
+        public void HelloTest()
+        {
+            Object bob = new();
+
+            var trackedItem = TrackerSystem.GetOrRegister(bob);
+
+            trackedItem.Add("Money", 200, 1, "personal");
+
+            trackedItem.Add("Money", 200, 300, "personal");
+
+            TagFilter w = new();
+
+            w.Set("personal", FilterOption.Include);
+
+            using(var scope = trackedItem.ScopeByTicks(1, 200, w))
+            {
+
+                LogFactory.Info(scope.GetOrNext<int>("Money", 1));
+            }
+
+
         }
     }
 }
