@@ -1,3 +1,3 @@
-# Sbox-Tracking
+# TrackingKit-Core
 
-A library for tracking entities, aimed for S&Box. 
+Base library for tracking classes, with easy time unit conversions.
