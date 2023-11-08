@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,10 +15,10 @@ namespace Tracking
     /// Represents a filter for a specific type T.
     /// </summary>
     /// <typeparam name="T">The type to filter. Must implement IEquatable.</typeparam>
-    public class Filter<T> : IReadOnlyFilter<T>, ICloneable
+    public abstract class Filter<T> : IReadOnlyFilter<T>, ICloneable
         where T : IEquatable<T>
     {
-        protected readonly Dictionary<T, FilterOption> Values;
+        protected readonly IDictionary<T, FilterOption> Values;
 
         /// <summary>
         /// Gets or sets the default filter option.
@@ -29,7 +30,7 @@ namespace Tracking
         /// </summary>
         public Filter()
         {
-            Values = new Dictionary<T, FilterOption>();
+            Values = new ConcurrentDictionary<T, FilterOption>();
         }
 
         /// <summary>
